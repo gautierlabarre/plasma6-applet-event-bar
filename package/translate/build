@@ -1,0 +1,15 @@
+#!/bin/bash
+# Compile .po files to .mo and install to contents/locale/
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PACKAGE_DIR="$(dirname "$DIR")"
+DOMAIN="plasma_applet_org.kde.plasma.eventbar"
+
+for po in "$DIR"/*.po; do
+    if [ -f "$po" ]; then
+        lang=$(basename "$po" .po)
+        mo_dir="$PACKAGE_DIR/contents/locale/$lang/LC_MESSAGES"
+        mkdir -p "$mo_dir"
+        msgfmt -o "$mo_dir/$DOMAIN.mo" "$po"
+        echo "Compiled $lang → $mo_dir/$DOMAIN.mo"
+    fi
+done
