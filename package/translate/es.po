@@ -1,0 +1,117 @@
+# Spanish translation for plasma-applet-event-bar
+# Copyright (C) 2024
+# This file is distributed under the same license as the plasma-applet-event-bar package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-applet-event-bar\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: 2024-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Events"
+msgstr "Eventos"
+
+msgid "upcoming"
+msgstr "próximos"
+
+msgid "Today"
+msgstr "Hoy"
+
+msgid "Tomorrow"
+msgstr "Mañana"
+
+msgid "In progress"
+msgstr "En curso"
+
+msgctxt "time since event started, in minutes"
+msgid "%1min ago"
+msgstr "hace %1min"
+
+msgctxt "time since event started, in hours"
+msgid "%1h ago"
+msgstr "hace %1h"
+
+msgctxt "time since event started, hours and minutes"
+msgid "%1h %2min ago"
+msgstr "hace %1h %2min"
+
+msgid "Now"
+msgstr "Ahora"
+
+msgctxt "relative time in minutes"
+msgid "in %1min"
+msgstr "en %1min"
+
+msgctxt "relative time in hours"
+msgid "in %1h"
+msgstr "en %1h"
+
+msgctxt "relative time hours and minutes"
+msgid "in %1h %2min"
+msgstr "en %1h %2min"
+
+msgctxt "short duration in minutes"
+msgid "%1min"
+msgstr "%1min"
+
+msgctxt "short duration in hours"
+msgid "%1h"
+msgstr "%1h"
+
+msgctxt "short duration hours and minutes"
+msgid "%1h%2"
+msgstr "%1h%2"
+
+msgctxt "short duration in days"
+msgid "%1d"
+msgstr "%1d"
+
+msgctxt "short duration days and hours"
+msgid "%1d %2h"
+msgstr "%1d %2h"
+
+msgid "Upcoming meetings"
+msgstr "Próximas reuniones"
+
+msgid "Configure your Google account\nin the widget settings."
+msgstr "Configura tu cuenta de Google\nen los ajustes del widget."
+
+msgid "No upcoming events"
+msgstr "No hay eventos próximos"
+
+msgid "(no title)"
+msgstr "(sin título)"
+
+msgid "All day"
+msgstr "Todo el día"
+
+msgid "Client ID:"
+msgstr "ID de cliente:"
+
+msgid "Client Secret:"
+msgstr "Secreto de cliente:"
+
+msgid "Connecting..."
+msgstr "Conectando..."
+
+msgid "Sign in with Google"
+msgstr "Iniciar sesión con Google"
+
+msgid "Error: could not retrieve authorization code"
+msgstr "Error: no se pudo obtener el código de autorización"
+
+msgid "Error: token exchange failed"
+msgstr "Error: falló el intercambio de tokens"
+
+msgid "Connected to Google Calendar"
+msgstr "Conectado a Google Calendar"
+
+msgid "Sign out"
+msgstr "Cerrar sesión"

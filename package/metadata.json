@@ -1,0 +1,17 @@
+{
+    "KPlugin": {
+        "Name": "Event Bar",
+        "Description": "Display upcoming calendar events in the panel",
+        "Icon": "view-calendar",
+        "Id": "org.kde.plasma.eventbar",
+        "Category": "Date and Time",
+        "Version": "0.1.0",
+        "Authors": [
+            {
+                "Name": "Gautier LABARRE"
+            }
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

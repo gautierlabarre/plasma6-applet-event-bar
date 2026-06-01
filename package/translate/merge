@@ -1,0 +1,28 @@
+#!/bin/bash
+# Extract translatable strings from QML/JS files and update .po files
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PACKAGE_DIR="$(dirname "$DIR")"
+DOMAIN="plasma_applet_org.kde.plasma.eventbar"
+
+# Extract strings
+xgettext \
+    --from-code=UTF-8 \
+    --width=200 \
+    --add-location=file \
+    -C -kde -ci18n \
+    -ki18n:1 -ki18nc:1c,2 -ki18np:1,2 -ki18ncp:1c,2,3 \
+    -o "$DIR/template.pot" \
+    "$PACKAGE_DIR/contents/ui/main.qml" \
+    "$PACKAGE_DIR/contents/ui/ConfigGeneral.qml" \
+    2>/dev/null
+
+echo "Extracted strings to template.pot"
+
+# Update .po files
+for po in "$DIR"/*.po; do
+    if [ -f "$po" ]; then
+        lang=$(basename "$po" .po)
+        msgmerge --update --backup=none "$po" "$DIR/template.pot"
+        echo "Updated $lang.po"
+    fi
+done

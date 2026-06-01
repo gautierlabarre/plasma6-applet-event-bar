@@ -1,0 +1,148 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024
+# This file is distributed under the same license as the plasma-applet-event-bar package.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-applet-event-bar\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: contents/ui/main.qml
+msgid "Events"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "upcoming"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Today"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Tomorrow"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "In progress"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "time since event started, in minutes"
+msgid "%1min ago"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "time since event started, in hours"
+msgid "%1h ago"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "time since event started, hours and minutes"
+msgid "%1h %2min ago"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Now"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "relative time in minutes"
+msgid "in %1min"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "relative time in hours"
+msgid "in %1h"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "relative time hours and minutes"
+msgid "in %1h %2min"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "short duration in minutes"
+msgid "%1min"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "short duration in hours"
+msgid "%1h"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "short duration hours and minutes"
+msgid "%1h%2"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "short duration in days"
+msgid "%1d"
+msgstr ""
+
+#: contents/ui/main.qml
+msgctxt "short duration days and hours"
+msgid "%1d %2h"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Upcoming meetings"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Configure your Google account\nin the widget settings."
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "No upcoming events"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "(no title)"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "All day"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Client ID:"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Client Secret:"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Connecting..."
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Sign in with Google"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Error: could not retrieve authorization code"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Error: token exchange failed"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Connected to Google Calendar"
+msgstr ""
+
+#: contents/ui/ConfigGeneral.qml
+msgid "Sign out"
+msgstr ""
