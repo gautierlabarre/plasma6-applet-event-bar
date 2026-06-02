@@ -115,6 +115,42 @@ msgstr ""
 msgid "All day"
 msgstr ""
 
+#: contents/ui/main.qml
+msgid "%1 is starting"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Join"
+msgstr ""
+
+#: contents/config/config.qml
+msgid "Google Account"
+msgstr ""
+
+#: contents/config/config.qml
+msgid "Options"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Notify when an event starts"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Show a reminder notification"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Minutes before"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Reminder: %1"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "In %1 minutes"
+msgstr ""
+
 #: contents/ui/ConfigGeneral.qml
 msgid "Client ID:"
 msgstr ""

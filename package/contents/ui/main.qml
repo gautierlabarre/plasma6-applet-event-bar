@@ -5,6 +5,7 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.extras as PlasmaExtras
 import org.kde.kirigami as Kirigami
 import "lib/Requests.js" as Requests
+import "lib"
 
 PlasmoidItem {
     id: root
@@ -13,14 +14,29 @@ PlasmoidItem {
 
     property bool isLoggedIn: plasmoid.configuration.refreshToken !== ""
     property bool isLoading: false
+
+    // Displayed in the panel's compact representation
     property string nextEventTitle: ""
     property string nextEventDuration: ""
     property double nextEventStartMs: 0
     property bool nextEventIsAllDay: false
+
+    // Google Calendar color palette, fetched once then cached
     property var eventColorMap: ({})
     property string calendarDefaultColor: ""
     property bool colorsLoaded: false
 
+    // Tracks startMs of events already notified to avoid duplicates
+    property var notifiedEvents: ({})
+
+    // Used to run notify-send commands
+    ExecUtil {
+        id: notifier
+    }
+
+    // --- Formatting helpers ---
+
+    // Relative time shown in the panel (e.g. "in 5min", "Now", "3min ago")
     function formatRelativeTime() {
         if (nextEventIsAllDay) return i18n("Today")
         if (nextEventStartMs <= 0) return i18n("upcoming")
@@ -41,17 +57,35 @@ PlasmoidItem {
         return i18nc("time since event started, hours and minutes", "%1h %2min ago", hAgo, mAgo)
     }
 
+    // --- Timers ---
+
+    // Incremented on each minute tick to force re-evaluation of panel text binding
+    property int timerTick: 0
+
+    // Milliseconds until the next system clock minute boundary
+    function msUntilNextMinute() {
+        var ms = 60000 - (Date.now() % 60000)
+        return ms < 100 ? 60000 : ms
+    }
+
+    // Fires exactly on each minute boundary, synced with the system clock
     Timer {
-        id: compactTimer
-        interval: 30 * 1000
-        repeat: true
-        running: root.isLoggedIn && root.nextEventStartMs > 0
+        id: minuteTimer
+        interval: root.msUntilNextMinute()
+        running: root.isLoggedIn
+        onTriggered: {
+            root.timerTick++
+            checkEventNotifications()
+            interval = root.msUntilNextMinute()
+            restart()
+        }
     }
 
     ListModel {
         id: eventsModel
     }
 
+    // Refetch events from Google Calendar every 5 minutes
     Timer {
         id: refreshTimer
         interval: 5 * 60 * 1000
@@ -60,6 +94,7 @@ PlasmoidItem {
         onTriggered: fetchEvents()
     }
 
+    // Reset state when user signs out
     Connections {
         target: plasmoid.configuration
         function onRefreshTokenChanged() {
@@ -119,6 +154,9 @@ PlasmoidItem {
         return Qt.locale().dayName(eventDate.getDay(), Locale.LongFormat) + " " + eventDate.getDate()
     }
 
+    // --- OAuth ---
+
+    // Refreshes the access token if expired, then calls callback with a valid token
     function ensureAccessToken(callback) {
         var expiresAt = plasmoid.configuration.accessTokenExpiresAt || 0
         if (plasmoid.configuration.accessToken && Date.now() < expiresAt - 5000) {
@@ -145,6 +183,9 @@ PlasmoidItem {
         })
     }
 
+    // --- Google Calendar API ---
+
+    // Fetches event color palette and primary calendar color (cached after first call)
     function loadColors(token, callback) {
         if (colorsLoaded) {
             callback()
@@ -174,6 +215,103 @@ PlasmoidItem {
         })
     }
 
+    // --- Notifications ---
+
+    // Checks all events for reminder and start-time notifications
+    function checkEventNotifications() {
+        var now = Date.now()
+        for (var i = 0; i < eventsModel.count; i++) {
+            var event = eventsModel.get(i)
+            if (event.startMs <= 0) continue
+            var key = String(event.startMs)
+            var timeUntil = event.startMs - now
+
+            if (plasmoid.configuration.enableReminder) {
+                var reminderMs = plasmoid.configuration.reminderMinutes * 60000
+                var reminderKey = "reminder_" + key
+                if (timeUntil > 0 && timeUntil <= reminderMs && !notifiedEvents[reminderKey]) {
+                    var u1 = notifiedEvents
+                    u1[reminderKey] = true
+                    notifiedEvents = u1
+                    sendReminderNotification(event)
+                }
+            }
+
+            if (plasmoid.configuration.enableNotifications) {
+                var elapsed = now - event.startMs
+                if (elapsed >= 0 && elapsed < 60000 && !notifiedEvents[key]) {
+                    var u2 = notifiedEvents
+                    u2[key] = true
+                    notifiedEvents = u2
+                    sendEventNotification(event)
+                }
+            }
+        }
+    }
+
+    // Reminder: fires X minutes before the event (transient, 10s)
+    function sendReminderNotification(event) {
+        var title = i18n("Reminder: %1", event.title)
+        var minutes = plasmoid.configuration.reminderMinutes
+        var bodyParts = [i18n("In %1 minutes", minutes)]
+        if (event.location) bodyParts.push(event.location)
+        var body = bodyParts.join("\n")
+        var icon = event.hasMeet ? "camera-video" : "appointment-soon"
+
+        if (event.hasMeet && event.meetUrl) {
+            var meetUrl = event.meetUrl
+            var joinLabel = i18n("Join")
+            var cmd = [
+                "sh", "-c",
+                "A=$(notify-send --wait -t 10000 -i '" + icon + "' -a 'Event Bar'"
+                + " --action='default=" + joinLabel + "'"
+                + " --action='meet=" + joinLabel + "'"
+                + " '" + title.replace(/'/g, "'\"'\"'") + "'"
+                + " '" + body.replace(/'/g, "'\"'\"'") + "'"
+                + "); [ \"$A\" = default ] || [ \"$A\" = meet ] && xdg-open '"
+                + meetUrl.replace(/'/g, "'\"'\"'") + "'"
+            ]
+            notifier.exec(cmd)
+        } else {
+            notifier.exec(["notify-send", "-t", "10000", "-i", icon, "-a", "Event Bar", title, body])
+        }
+    }
+
+    // Start notification: fires when the event begins (persistent, stays until dismissed)
+    function sendEventNotification(event) {
+        var title = i18n("%1 is starting", event.title)
+        var bodyParts = []
+        if (event.time !== "") {
+            var timeLine = event.time
+            if (event.duration !== "") timeLine += " · " + event.duration
+            bodyParts.push(timeLine)
+        }
+        if (event.location) bodyParts.push(event.location)
+        var body = bodyParts.join("\n")
+        var icon = event.hasMeet ? "camera-video" : "appointment-soon"
+
+        if (event.hasMeet && event.meetUrl) {
+            var meetUrl = event.meetUrl
+            var joinLabel = i18n("Join")
+            var cmd = [
+                "sh", "-c",
+                "A=$(notify-send --wait -t 0 -i '" + icon + "' -a 'Event Bar'"
+                + " --action='default=" + joinLabel + "'"
+                + " --action='meet=" + joinLabel + "'"
+                + " '" + title.replace(/'/g, "'\"'\"'") + "'"
+                + (body !== "" ? " '" + body.replace(/'/g, "'\"'\"'") + "'" : "")
+                + "); [ \"$A\" = default ] || [ \"$A\" = meet ] && xdg-open '"
+                + meetUrl.replace(/'/g, "'\"'\"'") + "'"
+            ]
+            notifier.exec(cmd)
+        } else {
+            var cmd2 = ["notify-send", "-t", "0", "-i", icon, "-a", "Event Bar", title]
+            if (body !== "") cmd2.push(body)
+            notifier.exec(cmd2)
+        }
+    }
+
+    // Fetches upcoming events from Google Calendar (next 7 days, max 20)
     function fetchEvents() {
         if (!isLoggedIn) return
         isLoading = true
@@ -238,22 +376,33 @@ PlasmoidItem {
                     })
                 }
 
+                // Prefer the first accepted event for the panel display
                 if (eventsModel.count > 0) {
-                    var firstEvent = data.items[0]
-                    nextEventTitle = eventsModel.get(0).title
-                    nextEventDuration = eventsModel.get(0).duration
-                    nextEventIsAllDay = !firstEvent.start.dateTime
-                    nextEventStartMs = nextEventIsAllDay ? 0 : new Date(firstEvent.start.dateTime).getTime()
+                    var bestIdx = 0
+                    for (var k = 0; k < eventsModel.count; k++) {
+                        if (eventsModel.get(k).responseStatus === "accepted") {
+                            bestIdx = k
+                            break
+                        }
+                    }
+                    var best = eventsModel.get(bestIdx)
+                    nextEventTitle = best.title
+                    nextEventDuration = best.duration
+                    nextEventIsAllDay = best.time === ""
+                    nextEventStartMs = best.startMs
                 } else {
                     nextEventTitle = ""
                     nextEventDuration = ""
                     nextEventStartMs = 0
                     nextEventIsAllDay = false
                 }
+                checkEventNotifications()
             })
             })
         })
     }
+
+    // --- Compact representation (panel) ---
 
     compactRepresentation: MouseArea {
         Layout.preferredWidth: labels.implicitWidth
@@ -276,10 +425,11 @@ PlasmoidItem {
                 elide: Text.ElideRight
             }
 
+            // Re-evaluated on each minute tick via timerTick dependency
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: {
-                    compactTimer.triggered
+                    root.timerTick
                     if (!root.isLoggedIn || (root.nextEventStartMs <= 0 && !root.nextEventIsAllDay)) return i18n("upcoming")
                     var parts = [root.formatRelativeTime()]
                     if (root.nextEventDuration !== "") parts.push(root.nextEventDuration)
@@ -291,6 +441,8 @@ PlasmoidItem {
             }
         }
     }
+
+    // --- Full representation (popup) ---
 
     fullRepresentation: ColumnLayout {
         Layout.minimumWidth: Kirigami.Units.gridUnit * 18
@@ -318,9 +470,10 @@ PlasmoidItem {
                 }
 
                 PlasmaComponents.ToolButton {
-                    icon.name: root.hideOnWindowDeactivate ? "window-pin" : "window-unpin"
+                    icon.name: "window-pin"
+                    checkable: true
                     checked: !root.hideOnWindowDeactivate
-                    onClicked: root.hideOnWindowDeactivate = !root.hideOnWindowDeactivate
+                    onToggled: root.hideOnWindowDeactivate = !checked
                 }
             }
         }

@@ -92,6 +92,33 @@ msgstr "(ohne Titel)"
 msgid "All day"
 msgstr "Ganztägig"
 
+msgid "%1 is starting"
+msgstr "%1 beginnt"
+
+msgid "Join"
+msgstr "Beitreten"
+
+msgid "Google Account"
+msgstr "Google-Konto"
+
+msgid "Options"
+msgstr "Optionen"
+
+msgid "Notify when an event starts"
+msgstr "Benachrichtigen, wenn ein Termin beginnt"
+
+msgid "Show a reminder notification"
+msgstr "Erinnerungsbenachrichtigung anzeigen"
+
+msgid "Minutes before"
+msgstr "Minuten vorher"
+
+msgid "Reminder: %1"
+msgstr "Erinnerung: %1"
+
+msgid "In %1 minutes"
+msgstr "In %1 Minuten"
+
 msgid "Client ID:"
 msgstr "Client-ID:"
 
