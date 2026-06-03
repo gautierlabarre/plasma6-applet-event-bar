@@ -27,9 +27,6 @@ msgstr "Aujourd'hui"
 msgid "Tomorrow"
 msgstr "Demain"
 
-msgid "In progress"
-msgstr "En cours"
-
 msgctxt "time since event started, in minutes"
 msgid "%1min ago"
 msgstr "il y a %1min"
@@ -142,3 +139,12 @@ msgstr "Connecté à Google Calendar"
 
 msgid "Sign out"
 msgstr "Se déconnecter"
+
+msgid "Authentication failed. Try signing in again."
+msgstr "Échec de l'authentification. Essayez de vous reconnecter."
+
+msgid "Could not load events. Check your connection."
+msgstr "Impossible de charger les événements. Vérifiez votre connexion."
+
+msgid "Retry"
+msgstr "Réessayer"

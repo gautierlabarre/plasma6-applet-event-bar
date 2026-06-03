@@ -14,6 +14,7 @@ PlasmoidItem {
 
     property bool isLoggedIn: plasmoid.configuration.refreshToken !== ""
     property bool isLoading: false
+    property string errorMessage: ""
 
     // Displayed in the panel's compact representation
     property string nextEventTitle: ""
@@ -71,6 +72,19 @@ PlasmoidItem {
         onTriggered: fetchEvents()
     }
 
+    // Safety net: if a fetch hangs (e.g. network down, XHR never completes), force timeout
+    Timer {
+        id: fetchTimeout
+        interval: 15000
+        onTriggered: {
+            if (isLoading) {
+                isLoading = false
+                console.warn("[EventBar] Request timed out")
+                errorMessage = i18n("Could not load events. Check your connection.")
+            }
+        }
+    }
+
     // Reset state when user signs out
     Connections {
         target: plasmoid.configuration
@@ -85,6 +99,7 @@ PlasmoidItem {
                 nextEventIsAllDay = false
                 colorsLoaded = false
                 calendarDefaultColor = ""
+                errorMessage = ""
             }
         }
     }
@@ -206,9 +221,17 @@ PlasmoidItem {
     function fetchEvents() {
         if (!isLoggedIn) return
         isLoading = true
+        errorMessage = ""
+        fetchTimeout.restart()
 
-        CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, function(token) {
-            if (!token) { isLoading = false; return }
+        CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, function(token, error) {
+            if (!token) {
+                fetchTimeout.stop()
+                isLoading = false
+                console.warn("[EventBar] Token refresh failed:", error)
+                errorMessage = i18n("Authentication failed. Try signing in again.")
+                return
+            }
 
             if (!colorsLoaded) {
                 CalendarApi.loadColors(token, Requests, function(colors, calColor) {
@@ -224,9 +247,15 @@ PlasmoidItem {
     }
 
     function loadEvents(token) {
-        CalendarApi.fetchEvents(token, Requests, function(items) {
+        CalendarApi.fetchEvents(token, Requests, function(items, error) {
+            fetchTimeout.stop()
             isLoading = false
-            if (!items) return
+            if (!items) {
+                console.warn("[EventBar] Failed to load events:", error)
+                errorMessage = i18n("Could not load events. Check your connection.")
+                return
+            }
+            errorMessage = ""
 
             eventsModel.clear()
             for (var i = 0; i < items.length; i++) {
@@ -298,6 +327,7 @@ PlasmoidItem {
     fullRepresentation: FullView {
         isLoggedIn: root.isLoggedIn
         isLoading: root.isLoading
+        errorMessage: root.errorMessage
         events: eventsModel
         hideOnWindowDeactivate: root.hideOnWindowDeactivate
         onRefreshClicked: root.fetchEvents()

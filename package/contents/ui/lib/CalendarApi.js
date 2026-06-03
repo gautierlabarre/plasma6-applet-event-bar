@@ -6,7 +6,7 @@
 function ensureAccessToken(config, Requests, callback) {
     var expiresAt = config.accessTokenExpiresAt || 0
     if (config.accessToken && Date.now() < expiresAt - 5000) {
-        callback(config.accessToken)
+        callback(config.accessToken, null)
         return
     }
 
@@ -20,12 +20,12 @@ function ensureAccessToken(config, Requests, callback) {
         }
     }, function(err, data) {
         if (err || !data || !data.access_token) {
-            callback(null)
+            callback(null, err || "token_refresh_failed")
             return
         }
         config.accessToken = data.access_token
         config.accessTokenExpiresAt = Date.now() + data.expires_in * 1000
-        callback(data.access_token)
+        callback(data.access_token, null)
     })
 }
 
@@ -72,10 +72,10 @@ function fetchEvents(token, Requests, callback) {
         headers: { "Authorization": "Bearer " + token }
     }, function(err, data) {
         if (err || !data || !data.items) {
-            callback(null)
+            callback(null, err || "fetch_failed")
             return
         }
-        callback(data.items)
+        callback(data.items, null)
     })
 }
 

@@ -32,11 +32,7 @@ msgstr ""
 msgid "Tomorrow"
 msgstr ""
 
-#: contents/ui/main.qml
-msgid "In progress"
-msgstr ""
-
-#: contents/ui/main.qml
+#: contents/ui/CompactView.qml
 msgctxt "time since event started, in minutes"
 msgid "%1min ago"
 msgstr ""
@@ -181,4 +177,16 @@ msgstr ""
 
 #: contents/ui/ConfigGeneral.qml
 msgid "Sign out"
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Authentication failed. Try signing in again."
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Could not load events. Check your connection."
+msgstr ""
+
+#: contents/ui/FullView.qml
+msgid "Retry"
 msgstr ""
