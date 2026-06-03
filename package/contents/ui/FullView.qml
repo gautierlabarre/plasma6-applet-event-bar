@@ -9,6 +9,7 @@ ColumnLayout {
 
     required property bool isLoggedIn
     required property bool isLoading
+    required property string errorMessage
     required property var events
     required property bool hideOnWindowDeactivate
 
@@ -70,14 +71,70 @@ ColumnLayout {
         running: visible
     }
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        visible: fullView.isLoggedIn && !fullView.isLoading && fullView.errorMessage !== "" && fullView.events.count === 0
+        spacing: Kirigami.Units.smallSpacing
+
+        Item { Layout.fillHeight: true }
+
+        Kirigami.Icon {
+            Layout.alignment: Qt.AlignHCenter
+            source: "dialog-warning"
+            implicitWidth: Kirigami.Units.iconSizes.medium
+            implicitHeight: Kirigami.Units.iconSizes.medium
+        }
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: fullView.errorMessage
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            opacity: 0.7
+        }
+
+        PlasmaComponents.ToolButton {
+            Layout.alignment: Qt.AlignHCenter
+            text: i18n("Retry")
+            icon.name: "view-refresh"
+            onClicked: fullView.refreshClicked()
+        }
+
+        Item { Layout.fillHeight: true }
+    }
+
     PlasmaComponents.Label {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        visible: fullView.isLoggedIn && !fullView.isLoading && fullView.events.count === 0
+        visible: fullView.isLoggedIn && !fullView.isLoading && fullView.errorMessage === "" && fullView.events.count === 0
         text: i18n("No upcoming events")
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         opacity: 0.7
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: Kirigami.Units.smallSpacing
+        Layout.rightMargin: Kirigami.Units.smallSpacing
+        Layout.topMargin: Kirigami.Units.smallSpacing
+        visible: fullView.errorMessage !== "" && !fullView.isLoading && fullView.events.count > 0
+        spacing: Kirigami.Units.smallSpacing
+
+        Kirigami.Icon {
+            source: "dialog-warning"
+            implicitWidth: Kirigami.Units.iconSizes.small
+            implicitHeight: Kirigami.Units.iconSizes.small
+        }
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: fullView.errorMessage
+            font.pixelSize: Kirigami.Theme.smallFont.pixelSize
+            elide: Text.ElideRight
+            opacity: 0.7
+        }
     }
 
     ListView {

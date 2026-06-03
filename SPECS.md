@@ -39,7 +39,7 @@ The applet displays the next event in the KDE panel with relative time and durat
 - Min size: 18×14 grid units
 - Header: "Upcoming meetings" + refresh button + pin button
 - List grouped by date section ("Today", "Tomorrow", day+date)
-- States: loading (spinner), empty ("No upcoming events"), not logged in (config message)
+- States: loading (spinner), empty ("No upcoming events"), error (warning icon + message + retry button), not logged in (config message)
 
 **Event item** (delegate)
 - Left colored border (3px): Google Calendar event color or default color
@@ -135,7 +135,7 @@ package/contents/
 ### Responsibilities
 
 **main.qml** (PlasmoidItem)
-- Global state: `isLoggedIn`, `isLoading`, `nextEvent*`, `eventsModel`, `notifiedEvents`
+- Global state: `isLoggedIn`, `isLoading`, `errorMessage`, `nextEvent*`, `eventsModel`, `notifiedEvents`
 - Timers: `minuteTimer` (clock sync), `refreshTimer` (5min)
 - API: calls `CalendarApi.*` and handles callbacks
 - Notifications: `checkEventNotifications()`, `sendEventNotification()`, `sendReminderNotification()`
@@ -148,7 +148,7 @@ package/contents/
 - Click: emits `clicked` signal → `root.expanded = !root.expanded`
 
 **FullView.qml** (ColumnLayout)
-- Required props: `isLoggedIn`, `isLoading`, `events` (ListModel), `hideOnWindowDeactivate`
+- Required props: `isLoggedIn`, `isLoading`, `errorMessage`, `events` (ListModel), `hideOnWindowDeactivate`
 - Signals: `refreshClicked()`, `togglePin()`
 - Delegates to `EventItem` for each event
 
@@ -159,6 +159,7 @@ package/contents/
 **CalendarApi.js** (.pragma library)
 - Pure functions: `ensureAccessToken(config, Requests, callback)`, `loadColors()`, `fetchEvents()`, `getResponseStatus()`
 - No QML/i18n dependencies
+- Callbacks use `(result, error)` convention: second argument is error string on failure, null on success
 - Mutates `config.accessToken` and `config.accessTokenExpiresAt` directly
 
 **Notifications.js** (.pragma library)
@@ -190,6 +191,13 @@ package/contents/
 - Interactive actions: `--wait --action=id=label` + shell wrapper `sh -c "..."` to handle return
 - Timeout: `-t 0` (persistent), `-t 10000` (10s)
 - History: notifications appear in KDE notification center
+
+### Error Handling
+- API errors (token refresh, event fetch) are displayed in the popup via `errorMessage` property
+- Error state: warning icon + translated message + "Retry" button (only when no cached events)
+- If cached events exist during an error, they remain visible (error clears on next successful fetch)
+- Errors are logged to journal via `console.warn("[EventBar] ...")`
+- `errorMessage` is cleared on successful fetch, on new fetch attempt, and on logout
 
 ### Google Calendar API
 - OAuth 2.0: refresh token stored, access token volatile

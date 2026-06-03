@@ -2,16 +2,23 @@
 
 function request(opt, callback) {
     var xhr = new XMLHttpRequest()
+    var done = false
+    function finish(err, text, x) {
+        if (done) return
+        done = true
+        callback(err, text, x)
+    }
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status >= 200 && xhr.status < 300) {
-                callback(null, xhr.responseText, xhr)
+                finish(null, xhr.responseText, xhr)
             } else {
-                callback(xhr.status + " " + xhr.statusText, xhr.responseText, xhr)
+                finish((xhr.status || "network_error") + " " + xhr.statusText, xhr.responseText, xhr)
             }
         }
     }
     xhr.open(opt.method || "GET", opt.url)
+    xhr.timeout = opt.timeout || 15000
     if (opt.headers) {
         for (var key in opt.headers) {
             xhr.setRequestHeader(key, opt.headers[key])
