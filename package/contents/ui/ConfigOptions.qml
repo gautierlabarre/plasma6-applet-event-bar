@@ -8,55 +8,55 @@ import org.kde.plasma.plasmoid
 KCM.SimpleKCM {
     id: configOptions
 
-    property bool cfg_enableNotifications: plasmoid.configuration.enableNotifications
-    property bool cfg_enableReminder: plasmoid.configuration.enableReminder
-    property int cfg_reminderMinutes: plasmoid.configuration.reminderMinutes
     property int cfg_preferTimedHours: plasmoid.configuration.preferTimedHours
     property bool cfg_alignLeft: plasmoid.configuration.alignLeft
     property bool cfg_showIcon: plasmoid.configuration.showIcon
     property bool cfg_hideEventTitle: plasmoid.configuration.hideEventTitle
     property int cfg_maxTitleLength: plasmoid.configuration.maxTitleLength
 
+    // Plasma injects all cfg_* properties into every config page
+    property var cfg_clientId
+    property var cfg_clientIdDefault
+    property var cfg_clientSecret
+    property var cfg_clientSecretDefault
+    property var cfg_accessToken
+    property var cfg_accessTokenDefault
+    property var cfg_refreshToken
+    property var cfg_refreshTokenDefault
+    property var cfg_accessTokenExpiresAt
+    property var cfg_accessTokenExpiresAtDefault
+    property var cfg_enableNotifications
+    property var cfg_enableNotificationsDefault
+    property var cfg_enableReminder
+    property var cfg_enableReminderDefault
+    property var cfg_reminderMinutes
+    property var cfg_reminderMinutesDefault
+    property var cfg_preferTimedHoursDefault
+    property var cfg_alignLeftDefault
+    property var cfg_showIconDefault
+    property var cfg_hideEventTitleDefault
+    property var cfg_maxTitleLengthDefault
+
     ColumnLayout {
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: Kirigami.Units.largeSpacing
+        spacing: Kirigami.Units.smallSpacing
+
+        Kirigami.Heading {
+            level: 4
+            text: i18n("All-day event")
+        }
+
+        Kirigami.Separator {
+            Layout.fillWidth: true
+        }
 
         Kirigami.FormLayout {
             Layout.fillWidth: true
-
-            QQC2.Switch {
-                Kirigami.FormData.label: i18n("Notify when an event starts")
-                checked: cfg_enableNotifications
-                onToggled: cfg_enableNotifications = checked
-            }
-
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
-            }
-
-            QQC2.Switch {
-                id: reminderSwitch
-                Kirigami.FormData.label: i18n("Show a reminder notification")
-                checked: cfg_enableReminder
-                onToggled: cfg_enableReminder = checked
-            }
+            wideMode: true
 
             QQC2.SpinBox {
-                Kirigami.FormData.label: i18n("Minutes before")
-                value: cfg_reminderMinutes
-                from: 1
-                to: 60
-                onValueModified: cfg_reminderMinutes = value
-                enabled: cfg_enableReminder
-            }
-
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
-            }
-
-            QQC2.SpinBox {
-                Kirigami.FormData.label: i18n("Show all-day event if nothing within (hours)")
+                Kirigami.FormData.label: i18n("Show if nothing within (hours)")
                 value: cfg_preferTimedHours
                 from: 0
                 to: 12
@@ -76,17 +76,24 @@ KCM.SimpleKCM {
             opacity: 0.7
         }
 
+        Kirigami.Heading {
+            level: 4
+            text: i18n("Personalisation")
+            Layout.topMargin: Kirigami.Units.largeSpacing
+        }
+
+        Kirigami.Separator {
+            Layout.fillWidth: true
+        }
+
         Kirigami.FormLayout {
             Layout.fillWidth: true
+            wideMode: true
 
             QQC2.Switch {
                 Kirigami.FormData.label: i18n("Align panel text to the left")
                 checked: cfg_alignLeft
                 onToggled: cfg_alignLeft = checked
-            }
-
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
             }
 
             QQC2.Switch {
@@ -95,18 +102,10 @@ KCM.SimpleKCM {
                 onToggled: cfg_showIcon = checked
             }
 
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
-            }
-
             QQC2.Switch {
                 Kirigami.FormData.label: i18n("Show generic title instead of event name")
                 checked: cfg_hideEventTitle
                 onToggled: cfg_hideEventTitle = checked
-            }
-
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
             }
 
             QQC2.SpinBox {
