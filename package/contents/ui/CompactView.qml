@@ -11,14 +11,19 @@ MouseArea {
     required property string nextEventDuration
     required property bool nextEventIsAllDay
     required property double nextEventStartMs
+    required property string nextEventSectionDate
     required property int timerTick
+    required property bool alignLeft
+    required property bool showIcon
+    required property bool hideEventTitle
+    required property int maxTitleLength
 
-    Layout.preferredWidth: labels.implicitWidth
+    Layout.preferredWidth: content.implicitWidth
     Layout.fillHeight: true
 
     // Relative time shown in the panel (e.g. "in 5min", "Now", "3min ago")
     function formatRelativeTime() {
-        if (nextEventIsAllDay) return i18n("Today")
+        if (nextEventIsAllDay) return nextEventSectionDate
         if (nextEventStartMs <= 0) return i18n("upcoming")
         var diffMin = Math.round((nextEventStartMs - Date.now()) / 60000)
         if (diffMin > 60) {
@@ -37,35 +42,52 @@ MouseArea {
         return i18nc("time since event started, hours and minutes", "%1h %2min ago", hAgo, mAgo)
     }
 
-    ColumnLayout {
-        id: labels
-        anchors.centerIn: parent
-        spacing: 0
+    RowLayout {
+        id: content
+        anchors.centerIn: compactView.alignLeft ? undefined : parent
+        anchors.left: compactView.alignLeft ? parent.left : undefined
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Kirigami.Units.mediumSpacing
 
-        PlasmaComponents.Label {
-            Layout.fillWidth: true
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 12
-            text: compactView.isLoggedIn && compactView.nextEventTitle !== ""
-                ? compactView.nextEventTitle
-                : i18n("Events")
-            font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-            horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
+        Kirigami.Icon {
+            visible: compactView.showIcon
+            source: "office-calendar"
+            implicitWidth: Kirigami.Units.iconSizes.smallMedium
+            implicitHeight: Kirigami.Units.iconSizes.smallMedium
         }
 
-        // Re-evaluated on each minute tick via timerTick dependency
-        PlasmaComponents.Label {
-            Layout.fillWidth: true
-            text: {
-                compactView.timerTick
-                if (!compactView.isLoggedIn || (compactView.nextEventStartMs <= 0 && !compactView.nextEventIsAllDay)) return i18n("upcoming")
-                var parts = [compactView.formatRelativeTime()]
-                if (compactView.nextEventDuration !== "") parts.push(compactView.nextEventDuration)
-                return parts.join("  ·  ")
+        ColumnLayout {
+            id: labels
+            spacing: 0
+
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: {
+                    if (!compactView.isLoggedIn) return i18n("Events")
+                    if (compactView.nextEventTitle === "") return i18n("No events today")
+                    var raw = compactView.hideEventTitle ? i18n("Next event") : compactView.nextEventTitle
+                    if (raw.length > compactView.maxTitleLength) return raw.substring(0, compactView.maxTitleLength) + "…"
+                    return raw
+                }
+                font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
+                horizontalAlignment: compactView.alignLeft ? Text.AlignLeft : Text.AlignHCenter
+                elide: Text.ElideRight
             }
-            font.pixelSize: Kirigami.Theme.smallFont.pixelSize
-            horizontalAlignment: Text.AlignHCenter
-            opacity: 0.7
+
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                visible: compactView.isLoggedIn && compactView.nextEventTitle !== ""
+                text: {
+                    compactView.timerTick
+                    if (!compactView.isLoggedIn || (compactView.nextEventStartMs <= 0 && !compactView.nextEventIsAllDay)) return i18n("upcoming")
+                    var parts = [compactView.formatRelativeTime()]
+                    if (compactView.nextEventDuration !== "") parts.push(compactView.nextEventDuration)
+                    return parts.join("  ·  ")
+                }
+                font.pixelSize: Kirigami.Theme.smallFont.pixelSize
+                horizontalAlignment: compactView.alignLeft ? Text.AlignLeft : Text.AlignHCenter
+                opacity: 0.7
+            }
         }
     }
 }

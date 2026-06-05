@@ -11,21 +11,26 @@ The applet displays the next event in the KDE panel with relative time and durat
 ### 1. Panel Display (Compact Representation)
 
 **Behavior**
-- Displays the title of the next accepted event
-- Line 1: event title (ellipsed if too long, max 12 grid units)
-- Line 2: relative time + duration separated by " · "
-- Fallback: displays "Events" / "upcoming" if not logged in or no events
+- Displays the title of the next accepted event **from today only**
+- Optional calendar icon (`office-calendar`) to the left of the text
+- Line 1: event title (ellipsed if too long, max width configurable 10-40 characters, default 20), or generic "Next event" if configured
+- Line 2: relative time + duration separated by " · " (hidden when no event today)
+- Fallback when not logged in: "Events" / "upcoming"
+- Fallback when no events today: "No events today" (single line, no subtitle)
+- Text alignment: centered (default) or left-aligned (configurable)
 
 **Relative time** (updated every minute, synced with system clock)
-- All-day: "Today"
+- All-day: section date label ("Today", "Tomorrow", day name)
 - Future > 60min: "in Xh Ymin" or "in Xh"
 - Future 1-60min: "in Xmin"
 - -1 to 0min: "Now"
 - Past: "Xmin ago", "Xh Ymin ago"
 
-**Event priority**
-- The first accepted event (`responseStatus === "accepted"`) is displayed
-- If none accepted: displays the first in the list
+**Event priority** (today's events only)
+- If `preferTimedHours > 0`: first accepted timed event starting within the configured hours threshold
+- Fallback: first accepted event from today (may be all-day)
+- If `preferTimedHours = 0`: first accepted event from today (original behavior)
+- If no accepted events today: panel shows "No events today"
 - Declined events are excluded
 
 **Synchronized timer**
@@ -84,6 +89,11 @@ The applet displays the next event in the KDE panel with relative time and durat
 **"Options" page**
 - Switch: "Notify when an event starts"
 - Switch: "Show a reminder notification" + SpinBox minutes (1-60, default 5)
+- SpinBox: "Show all-day event if nothing within (hours)" (0-12, default 4). 0 = disabled, shows all-day first
+- Switch: "Align panel text to the left" (default off)
+- Switch: "Show calendar icon" (default on)
+- Switch: "Show generic title instead of event name" (default off)
+- SpinBox: "Maximum title width (characters)" (10-40, default 20). Controls max width of event title in the panel using TextMetrics
 
 ### 5. Google Calendar API
 
@@ -135,15 +145,15 @@ package/contents/
 ### Responsibilities
 
 **main.qml** (PlasmoidItem)
-- Global state: `isLoggedIn`, `isLoading`, `nextEvent*`, `eventsModel`, `notifiedEvents`
-- Timers: `minuteTimer` (clock sync), `refreshTimer` (5min)
+- Global state: `isLoggedIn`, `isLoading`, `errorMessage`, `nextEvent*`, `nextEventSectionDate`, `eventsModel`, `notifiedEvents`
+- Timers: `minuteTimer` (clock sync), `refreshTimer` (5min), `fetchTimeout` (15s safety net)
 - API: calls `CalendarApi.*` and handles callbacks
 - Notifications: `checkEventNotifications()`, `sendEventNotification()`, `sendReminderNotification()`
 - i18n formatting: `formatEventTime()`, `formatDuration()`, `formatSectionDate()`
 - Instantiates `CompactView` and `FullView` with bindings
 
 **CompactView.qml** (MouseArea)
-- Required props: `isLoggedIn`, `nextEventTitle`, `nextEventDuration`, `nextEventIsAllDay`, `nextEventStartMs`, `timerTick`
+- Required props: `isLoggedIn`, `nextEventTitle`, `nextEventDuration`, `nextEventIsAllDay`, `nextEventStartMs`, `nextEventSectionDate`, `timerTick`, `alignLeft`, `showIcon`, `hideEventTitle`
 - Internal function: `formatRelativeTime()` (requires i18n)
 - Click: emits `clicked` signal → `root.expanded = !root.expanded`
 
@@ -163,6 +173,8 @@ package/contents/
 
 **Notifications.js** (.pragma library)
 - Pure functions: `buildMeetNotifyCommand()`, `buildSimpleNotifyCommand()`, `shellEscape()`
+- All user-provided values are escaped via `shellEscape()` before shell interpolation
+- `timeout` is sanitized via `parseInt()` to prevent injection
 - Returns command arrays for `ExecUtil.exec()`
 
 ## Technical Constraints
@@ -191,6 +203,18 @@ package/contents/
 - Timeout: `-t 0` (persistent), `-t 10000` (10s)
 - History: notifications appear in KDE notification center
 
+### Error Handling
+- API errors (token refresh, event fetch) are displayed in the popup via `errorMessage` property
+- Error state: warning icon + translated message + "Retry" button (only when no cached events)
+- If cached events exist during an error, they remain visible (error clears on next successful fetch)
+- Errors are logged to journal via `console.warn("[EventBar] ...")`
+- `errorMessage` is cleared on successful fetch, on new fetch attempt, and on logout
+- Safety timeout (`fetchTimeout`, 15s): forces `isLoading = false` and sets error if XHR hangs (e.g. network down)
+
+### HTTP Requests
+- All requests have a 15s timeout (`xhr.timeout`) with guard against double callback
+- Request errors include status code or `"network_error"` prefix
+
 ### Google Calendar API
 - OAuth 2.0: refresh token stored, access token volatile
 - Rate limiting: not handled (low usage: 1 req/5min)
@@ -209,7 +233,14 @@ package/contents/
 ### Recommended Manual Tests
 
 - Panel: verify display with accepted, tentative, all-day, past, future events
+- Panel: verify "No events today" when only future-day events exist
+- Panel: verify calendar icon display (show/hide)
+- Panel: verify generic title mode ("Next event" instead of event name)
+- Panel: verify left alignment option
+- Panel: verify all-day event priority vs timed events (preferTimedHours threshold)
 - Popup: verify grouping by date, scroll, colors, Meet click
+- Popup: verify error state (network down → warning + retry button)
+- Popup: verify inline error banner when cached events + error
 - Timer: verify clock sync (transition from one minute to next)
 - Notifications: test start (persistent + action) and reminder (10s + action)
 - Config: sign in/out, change notification options

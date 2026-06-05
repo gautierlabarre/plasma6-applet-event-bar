@@ -182,3 +182,51 @@ msgstr ""
 #: contents/ui/ConfigGeneral.qml
 msgid "Sign out"
 msgstr ""
+
+#: contents/ui/main.qml
+msgid "Authentication failed. Try signing in again."
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Could not load events. Check your connection."
+msgstr ""
+
+#: contents/ui/FullView.qml
+msgid "Retry"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Show all-day event if nothing within (hours)"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "If a timed event starts within %1h, it will be shown instead."
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "The all-day event is always shown first."
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Align panel text to the left"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Show calendar icon"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Show generic title instead of event name"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Maximum title width (characters)"
+msgstr ""
+
+#: contents/ui/CompactView.qml
+msgid "Next event"
+msgstr ""
+
+#: contents/ui/CompactView.qml
+msgid "No events today"
+msgstr ""

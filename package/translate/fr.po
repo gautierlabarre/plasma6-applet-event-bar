@@ -142,3 +142,39 @@ msgstr "Connecté à Google Calendar"
 
 msgid "Sign out"
 msgstr "Se déconnecter"
+
+msgid "Authentication failed. Try signing in again."
+msgstr "Échec de l'authentification. Essayez de vous reconnecter."
+
+msgid "Could not load events. Check your connection."
+msgstr "Impossible de charger les événements. Vérifiez votre connexion."
+
+msgid "Retry"
+msgstr "Réessayer"
+
+msgid "Show all-day event if nothing within (hours)"
+msgstr "Afficher l'événement de la journée si aucun événement dans (heures)"
+
+msgid "If a timed event starts within %1h, it will be shown instead."
+msgstr "Si un événement ponctuel commence dans les %1h, il sera affiché à la place."
+
+msgid "The all-day event is always shown first."
+msgstr "L'événement de la journée est toujours affiché en priorité."
+
+msgid "Align panel text to the left"
+msgstr "Aligner le texte du panneau à gauche"
+
+msgid "Show calendar icon"
+msgstr "Afficher l'icône de calendrier"
+
+msgid "Show generic title instead of event name"
+msgstr "Afficher un titre générique au lieu du nom de l'événement"
+
+msgid "Maximum title width (characters)"
+msgstr "Largeur maximale du titre (caractères)"
+
+msgid "Next event"
+msgstr "Prochain événement"
+
+msgid "No events today"
+msgstr "Aucun événement aujourd'hui"
