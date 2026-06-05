@@ -104,6 +104,9 @@ msgstr "Account Google"
 msgid "Options"
 msgstr "Opzioni"
 
+msgid "Notifications"
+msgstr "Notifiche"
+
 msgid "Notify when an event starts"
 msgstr "Notifica all'inizio di un evento"
 
@@ -154,6 +157,15 @@ msgstr "Riprova"
 
 msgid "Show all-day event if nothing within (hours)"
 msgstr "Mostrare evento della giornata se nessun evento entro (ore)"
+
+msgid "Show if nothing within (hours)"
+msgstr "Mostrare se nessun evento entro (ore)"
+
+msgid "All-day event"
+msgstr "Evento della giornata"
+
+msgid "Personalisation"
+msgstr "Personalizzazione"
 
 msgid "If a timed event starts within %1h, it will be shown instead."
 msgstr "Se un evento puntuale inizia entro %1h, verrà mostrato al suo posto."

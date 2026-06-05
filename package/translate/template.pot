@@ -131,6 +131,10 @@ msgstr ""
 msgid "Options"
 msgstr ""
 
+#: contents/config/config.qml
+msgid "Notifications"
+msgstr ""
+
 #: contents/ui/ConfigOptions.qml
 msgid "Notify when an event starts"
 msgstr ""
@@ -197,6 +201,18 @@ msgstr ""
 
 #: contents/ui/ConfigOptions.qml
 msgid "Show all-day event if nothing within (hours)"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Show if nothing within (hours)"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "All-day event"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Personalisation"
 msgstr ""
 
 #: contents/ui/ConfigOptions.qml
