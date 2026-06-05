@@ -20,6 +20,7 @@ PlasmoidItem {
     property string nextEventDuration: ""
     property double nextEventStartMs: 0
     property bool nextEventIsAllDay: false
+    property string nextEventSectionDate: ""
 
     // Google Calendar color palette, fetched once then cached
     property var eventColorMap: ({})
@@ -83,9 +84,13 @@ PlasmoidItem {
                 nextEventDuration = ""
                 nextEventStartMs = 0
                 nextEventIsAllDay = false
+                nextEventSectionDate = ""
                 colorsLoaded = false
                 calendarDefaultColor = ""
             }
+        }
+        function onPreferTimedHoursChanged() {
+            updatePanelEvent()
         }
     }
 
@@ -94,6 +99,45 @@ PlasmoidItem {
     }
 
     // --- Formatting helpers (need i18n, must stay in QML) ---
+
+    function updatePanelEvent() {
+        var todayLabel = i18n("Today")
+        if (eventsModel.count > 0) {
+            var bestIdx = -1
+            var preferHours = plasmoid.configuration.preferTimedHours
+            var now = Date.now()
+            for (var k = 0; k < eventsModel.count; k++) {
+                var ev = eventsModel.get(k)
+                if (ev.sectionDate !== todayLabel) continue
+                if (ev.responseStatus !== "accepted") continue
+                if (bestIdx < 0) bestIdx = k
+                if (preferHours > 0 && ev.startMs > 0 && ev.startMs - now < preferHours * 3600000) {
+                    bestIdx = k
+                    break
+                }
+            }
+            if (bestIdx >= 0) {
+                var best = eventsModel.get(bestIdx)
+                nextEventTitle = best.title
+                nextEventDuration = best.duration
+                nextEventIsAllDay = best.time === ""
+                nextEventStartMs = best.startMs
+                nextEventSectionDate = best.sectionDate
+            } else {
+                nextEventTitle = ""
+                nextEventDuration = ""
+                nextEventStartMs = 0
+                nextEventIsAllDay = false
+                nextEventSectionDate = ""
+            }
+        } else {
+            nextEventTitle = ""
+            nextEventDuration = ""
+            nextEventStartMs = 0
+            nextEventIsAllDay = false
+            nextEventSectionDate = ""
+        }
+    }
 
     function formatEventTime(startStr, isAllDay) {
         if (isAllDay) return ""
@@ -259,26 +303,7 @@ PlasmoidItem {
                 })
             }
 
-            // Prefer the first accepted event for the panel display
-            if (eventsModel.count > 0) {
-                var bestIdx = 0
-                for (var k = 0; k < eventsModel.count; k++) {
-                    if (eventsModel.get(k).responseStatus === "accepted") {
-                        bestIdx = k
-                        break
-                    }
-                }
-                var best = eventsModel.get(bestIdx)
-                nextEventTitle = best.title
-                nextEventDuration = best.duration
-                nextEventIsAllDay = best.time === ""
-                nextEventStartMs = best.startMs
-            } else {
-                nextEventTitle = ""
-                nextEventDuration = ""
-                nextEventStartMs = 0
-                nextEventIsAllDay = false
-            }
+            updatePanelEvent()
             checkEventNotifications()
         })
     }
@@ -291,7 +316,12 @@ PlasmoidItem {
         nextEventDuration: root.nextEventDuration
         nextEventIsAllDay: root.nextEventIsAllDay
         nextEventStartMs: root.nextEventStartMs
+        nextEventSectionDate: root.nextEventSectionDate
         timerTick: root.timerTick
+        alignLeft: plasmoid.configuration.alignLeft
+        showIcon: plasmoid.configuration.showIcon
+        hideEventTitle: plasmoid.configuration.hideEventTitle
+        maxTitleLength: plasmoid.configuration.maxTitleLength
         onClicked: root.expanded = !root.expanded
     }
 
