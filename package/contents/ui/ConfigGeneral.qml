@@ -5,6 +5,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 import org.kde.plasma.plasmoid
 import "lib/Requests.js" as Requests
+import "lib/Log.js" as Log
 import "lib"
 
 KCM.SimpleKCM {
@@ -41,6 +42,8 @@ KCM.SimpleKCM {
     property var cfg_hideEventTitleDefault
     property var cfg_maxTitleLength
     property var cfg_maxTitleLengthDefault
+    property var cfg_enableDebugLogs
+    property var cfg_enableDebugLogsDefault
 
     ExecUtil {
         id: executable
@@ -135,14 +138,17 @@ KCM.SimpleKCM {
         var scriptPath = Qt.resolvedUrl("../scripts/google_oauth_server.py").toString().replace("file://", "")
         var scope = "https://www.googleapis.com/auth/calendar.readonly"
 
+        Log.log("auth", "Starting OAuth server: " + scriptPath)
         executable.exec(
             ["python3", scriptPath, cfg_clientId, scope],
             function(cmd, exitCode, exitStatus, stdout, stderr) {
                 if (exitCode !== 0 || stdout === "") {
+                    Log.log("auth", "OAuth server failed: exitCode=" + exitCode + " stderr=" + stderr)
                     isLoggingIn = false
                     statusMessage = i18n("Error: could not retrieve authorization code")
                     return
                 }
+                Log.log("auth", "Authorization code received, exchanging for tokens")
                 exchangeCodeForTokens(stdout)
             }
         )
@@ -161,9 +167,11 @@ KCM.SimpleKCM {
         }, function(err, data) {
             isLoggingIn = false
             if (err || !data || !data.access_token) {
+                Log.log("auth", "Token exchange failed: " + (err || "no access_token"))
                 statusMessage = i18n("Error: token exchange failed")
                 return
             }
+            Log.log("auth", "Token exchange successful, expires_in=" + data.expires_in + "s")
             plasmoid.configuration.accessToken = data.access_token
             plasmoid.configuration.refreshToken = data.refresh_token || ""
             plasmoid.configuration.accessTokenExpiresAt = Date.now() + data.expires_in * 1000
@@ -176,6 +184,7 @@ KCM.SimpleKCM {
     }
 
     function logout() {
+        Log.log("auth", "User signed out")
         plasmoid.configuration.accessToken = ""
         plasmoid.configuration.refreshToken = ""
         plasmoid.configuration.accessTokenExpiresAt = 0
