@@ -21,7 +21,7 @@ function buildMeetNotifyCommand(title, body, icon, timeout, meetUrl, joinLabel) 
 // Build a simple notify-send command array (no action, fire-and-forget)
 function buildSimpleNotifyCommand(title, body, icon, timeout) {
     Log.log("notif", "Building notification: \"" + title + "\" timeout=" + timeout + "ms")
-    var cmd = ["notify-send", "-t", String(timeout), "-i", icon, "-a", "Event Bar", title]
+    const cmd = ["notify-send", "-t", String(timeout), "-i", icon, "-a", "Event Bar", title]
     if (body !== "") cmd.push(body)
     return cmd
 }

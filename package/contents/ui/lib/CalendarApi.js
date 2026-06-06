@@ -3,10 +3,13 @@
 .pragma library
 .import "Log.js" as Log
 
-// Refresh access token if expired, then call callback with valid token
+var TOKEN_EXPIRY_BUFFER_MS = 5000
+var FETCH_DAYS_AHEAD = 7
+var MAX_RESULTS = 20
+
 function ensureAccessToken(config, Requests, callback) {
-    var expiresAt = config.accessTokenExpiresAt || 0
-    if (config.accessToken && Date.now() < expiresAt - 5000) {
+    const expiresAt = config.accessTokenExpiresAt || 0
+    if (config.accessToken && Date.now() < expiresAt - TOKEN_EXPIRY_BUFFER_MS) {
         Log.log("auth", "Token still valid, expires in " + Math.round((expiresAt - Date.now()) / 1000) + "s")
         callback(config.accessToken)
         return
@@ -34,48 +37,58 @@ function ensureAccessToken(config, Requests, callback) {
     })
 }
 
-// Fetch event color palette and primary calendar background color (cached via colorsLoaded flag)
 function loadColors(token, Requests, callback) {
     Log.log("api", "Loading calendar colors...")
-    Requests.getJSON({
-        url: "https://www.googleapis.com/calendar/v3/colors",
-        headers: { "Authorization": "Bearer " + token }
-    }, function(err, data) {
-        var eventColors = {}
-        if (!err && data && data.event) {
-            for (var id in data.event) {
-                eventColors[id] = data.event[id].background
-            }
-        } else {
-            Log.log("api", "Failed to load event colors: " + (err || "no data"))
-        }
-        Requests.getJSON({
-            url: "https://www.googleapis.com/calendar/v3/users/me/calendarList/primary",
-            headers: { "Authorization": "Bearer " + token }
-        }, function(err2, calData) {
-            var calColor = ""
-            if (!err2 && calData && calData.backgroundColor) {
-                calColor = calData.backgroundColor
-            } else {
-                Log.log("api", "Failed to load calendar color: " + (err2 || "no data"))
-            }
+    loadEventColors(token, Requests, function(eventColors) {
+        loadCalendarColor(token, Requests, function(calColor) {
             callback(eventColors, calColor)
         })
     })
 }
 
-// Fetch upcoming events from Google Calendar (next 7 days, max 20)
-function fetchEvents(token, Requests, callback) {
-    var now = new Date()
-    var end = new Date(now)
-    end.setDate(end.getDate() + 7)
+function loadEventColors(token, Requests, callback) {
+    Requests.getJSON({
+        url: "https://www.googleapis.com/calendar/v3/colors",
+        headers: { "Authorization": "Bearer " + token }
+    }, function(err, data) {
+        const colors = {}
+        if (!err && data && data.event) {
+            for (const id in data.event) {
+                colors[id] = data.event[id].background
+            }
+        } else {
+            Log.log("api", "Failed to load event colors: " + (err || "no data"))
+        }
+        callback(colors)
+    })
+}
 
-    var url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+function loadCalendarColor(token, Requests, callback) {
+    Requests.getJSON({
+        url: "https://www.googleapis.com/calendar/v3/users/me/calendarList/primary",
+        headers: { "Authorization": "Bearer " + token }
+    }, function(err, calData) {
+        let calColor = ""
+        if (!err && calData && calData.backgroundColor) {
+            calColor = calData.backgroundColor
+        } else {
+            Log.log("api", "Failed to load calendar color: " + (err || "no data"))
+        }
+        callback(calColor)
+    })
+}
+
+function fetchEvents(token, Requests, callback) {
+    const now = new Date()
+    const end = new Date(now)
+    end.setDate(end.getDate() + FETCH_DAYS_AHEAD)
+
+    const url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
         + "?timeMin=" + encodeURIComponent(now.toISOString())
         + "&timeMax=" + encodeURIComponent(end.toISOString())
         + "&singleEvents=true"
         + "&orderBy=startTime"
-        + "&maxResults=20"
+        + "&maxResults=" + MAX_RESULTS
 
     Log.log("api", "Fetching events from " + now.toISOString() + " to " + end.toISOString())
     Requests.getJSON({
@@ -92,12 +105,11 @@ function fetchEvents(token, Requests, callback) {
     })
 }
 
-// Extract user's response status from an event's attendees list
 function getResponseStatus(event) {
     if (!event.attendees) return "accepted"
-    for (var j = 0; j < event.attendees.length; j++) {
-        if (event.attendees[j].self) {
-            return event.attendees[j].responseStatus || "needsAction"
+    for (let i = 0; i < event.attendees.length; i++) {
+        if (event.attendees[i].self) {
+            return event.attendees[i].responseStatus || "needsAction"
         }
     }
     return "accepted"
