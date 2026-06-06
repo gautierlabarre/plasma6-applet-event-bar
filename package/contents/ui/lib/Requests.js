@@ -3,6 +3,14 @@
 
 var DEFAULT_TIMEOUT_MS = 15000
 
+function encodeFormData(data) {
+    const parts = []
+    for (const key in data) {
+        parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
+    }
+    return parts.join("&")
+}
+
 function request(opt, callback) {
     const xhr = new XMLHttpRequest()
     const method = opt.method || "GET"
@@ -39,15 +47,7 @@ function post(opt, callback) {
     opt.method = "POST"
     if (!opt.headers) opt.headers = {}
     opt.headers["Content-Type"] = "application/x-www-form-urlencoded"
-
-    if (typeof opt.data === "object") {
-        const parts = []
-        for (const key in opt.data) {
-            parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(opt.data[key]))
-        }
-        opt.data = parts.join("&")
-    }
-
+    if (typeof opt.data === "object") opt.data = encodeFormData(opt.data)
     request(opt, callback)
 }
 
@@ -70,14 +70,7 @@ function postJSON(opt, callback) {
     opt.method = "POST"
     if (!opt.headers) opt.headers = {}
     opt.headers["Content-Type"] = "application/x-www-form-urlencoded"
-
-    if (typeof opt.data === "object") {
-        const parts = []
-        for (const key in opt.data) {
-            parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(opt.data[key]))
-        }
-        opt.data = parts.join("&")
-    }
+    if (typeof opt.data === "object") opt.data = encodeFormData(opt.data)
 
     request(opt, function(err, data, xhr) {
         if (err) {

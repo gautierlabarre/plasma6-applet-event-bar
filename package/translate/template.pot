@@ -33,10 +33,6 @@ msgid "Tomorrow"
 msgstr ""
 
 #: contents/ui/main.qml
-msgid "In progress"
-msgstr ""
-
-#: contents/ui/main.qml
 msgctxt "time since event started, in minutes"
 msgid "%1min ago"
 msgstr ""
@@ -201,10 +197,6 @@ msgstr ""
 
 #: contents/ui/FullView.qml
 msgid "Retry"
-msgstr ""
-
-#: contents/ui/ConfigOptions.qml
-msgid "Show all-day event if nothing within (hours)"
 msgstr ""
 
 #: contents/ui/ConfigOptions.qml
