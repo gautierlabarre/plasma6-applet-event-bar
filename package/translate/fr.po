@@ -190,3 +190,9 @@ msgstr "Prochain événement"
 
 msgid "No events today"
 msgstr "Aucun événement aujourd'hui"
+
+msgid "Debug"
+msgstr "Débogage"
+
+msgid "Enable debug logs"
+msgstr "Activer les logs de débogage"

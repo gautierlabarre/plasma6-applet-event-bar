@@ -87,13 +87,22 @@ The applet displays the next event in the KDE panel with relative time and durat
 - Automatic token refresh if expired (5s margin)
 
 **"Options" page**
-- Switch: "Notify when an event starts"
-- Switch: "Show a reminder notification" + SpinBox minutes (1-60, default 5)
-- SpinBox: "Show all-day event if nothing within (hours)" (0-12, default 4). 0 = disabled, shows all-day first
+
+Section *All-day event*:
+- SpinBox: "Show if nothing within (hours)" (0-12, default 4). 0 = disabled, shows all-day first
+
+Section *Personalisation*:
 - Switch: "Align panel text to the left" (default off)
 - Switch: "Show calendar icon" (default on)
 - Switch: "Show generic title instead of event name" (default off)
 - SpinBox: "Maximum title width (characters)" (10-40, default 20). Controls max width of event title in the panel using TextMetrics
+
+Section *Debug*:
+- Switch: "Enable debug logs" (default off). When enabled, logs all operations to journal via `console.log("[eventbar] [category] message")`. Categories: `init`, `auth`, `api`, `events`, `notif`, `timer`, `config`. When disabled, zero log output.
+
+**"Notifications" page**
+- Switch: "Notify when an event starts"
+- Switch: "Show a reminder notification" + SpinBox minutes (1-60, default 5)
 
 ### 5. Google Calendar API
 
@@ -129,9 +138,11 @@ package/contents/
 │   ├── FullView.qml               # ~105 lines - Popup
 │   ├── EventItem.qml              # ~75 lines - List item
 │   ├── ConfigGeneral.qml          # Google Account config
-│   ├── ConfigOptions.qml          # Notifications config
+│   ├── ConfigOptions.qml          # Display & debug config
+│   ├── ConfigNotifications.qml    # Notifications config
 │   └── lib/
 │       ├── CalendarApi.js         # ~90 lines - Google API (.pragma library)
+│       ├── Log.js                 # Debug logging singleton (.pragma library)
 │       ├── Notifications.js       # ~30 lines - notify-send builders (.pragma library)
 │       ├── Requests.js            # HTTP helpers
 │       ├── ExecUtil.qml           # Plasma5Support.DataSource wrapper
@@ -176,6 +187,13 @@ package/contents/
 - All user-provided values are escaped via `shellEscape()` before shell interpolation
 - `timeout` is sanitized via `parseInt()` to prevent injection
 - Returns command arrays for `ExecUtil.exec()`
+
+**Log.js** (.pragma library)
+- Singleton module: `enabled` flag + `log(category, message)` function
+- `enabled` is set by `main.qml` from `plasmoid.configuration.enableDebugLogs`
+- When disabled: `log()` is a no-op (zero output)
+- Output format: `[eventbar] [category] message` via `console.log`
+- Imported by all JS libraries and QML files that need logging
 
 ## Technical Constraints
 
