@@ -104,6 +104,9 @@ msgstr "Cuenta de Google"
 msgid "Options"
 msgstr "Opciones"
 
+msgid "Notifications"
+msgstr "Notificaciones"
+
 msgid "Notify when an event starts"
 msgstr "Notificar cuando comience un evento"
 
@@ -142,3 +145,48 @@ msgstr "Conectado a Google Calendar"
 
 msgid "Sign out"
 msgstr "Cerrar sesión"
+
+msgid "Authentication failed. Try signing in again."
+msgstr "Error de autenticación. Intenta iniciar sesión de nuevo."
+
+msgid "Could not load events. Check your connection."
+msgstr "No se pudieron cargar los eventos. Comprueba tu conexión."
+
+msgid "Retry"
+msgstr "Reintentar"
+
+msgid "Show all-day event if nothing within (hours)"
+msgstr "Mostrar evento del día si no hay nada en (horas)"
+
+msgid "Show if nothing within (hours)"
+msgstr "Mostrar si no hay nada en (horas)"
+
+msgid "All-day event"
+msgstr "Evento del día"
+
+msgid "Personalisation"
+msgstr "Personalización"
+
+msgid "If a timed event starts within %1h, it will be shown instead."
+msgstr "Si un evento puntual comienza en las próximas %1h, se mostrará en su lugar."
+
+msgid "The all-day event is always shown first."
+msgstr "El evento del día siempre se muestra primero."
+
+msgid "Align panel text to the left"
+msgstr "Alinear el texto del panel a la izquierda"
+
+msgid "Show calendar icon"
+msgstr "Mostrar icono de calendario"
+
+msgid "Show generic title instead of event name"
+msgstr "Mostrar título genérico en lugar del nombre del evento"
+
+msgid "Maximum title width (characters)"
+msgstr "Ancho máximo del título (caracteres)"
+
+msgid "Next event"
+msgstr "Próximo evento"
+
+msgid "No events today"
+msgstr "Sin eventos hoy"

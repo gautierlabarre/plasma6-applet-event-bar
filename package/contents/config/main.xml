@@ -32,5 +32,20 @@
         <entry name="reminderMinutes" type="Int">
             <default>5</default>
         </entry>
+        <entry name="preferTimedHours" type="Int">
+            <default>4</default>
+        </entry>
+        <entry name="alignLeft" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="showIcon" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="hideEventTitle" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="maxTitleLength" type="Int">
+            <default>20</default>
+        </entry>
     </group>
 </kcfg>

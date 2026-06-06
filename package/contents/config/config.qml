@@ -12,4 +12,9 @@ ConfigModel {
         icon: "preferences-other"
         source: "ConfigOptions.qml"
     }
+    ConfigCategory {
+        name: i18n("Notifications")
+        icon: "preferences-desktop-notification"
+        source: "ConfigNotifications.qml"
+    }
 }

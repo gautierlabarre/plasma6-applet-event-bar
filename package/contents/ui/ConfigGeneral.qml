@@ -18,6 +18,30 @@ KCM.SimpleKCM {
     property bool isLoggingIn: false
     property string statusMessage: ""
 
+    // Plasma injects all cfg_* properties into every config page
+    property var cfg_accessTokenExpiresAt
+    property var cfg_accessTokenExpiresAtDefault
+    property var cfg_accessTokenDefault
+    property var cfg_refreshTokenDefault
+    property var cfg_clientIdDefault
+    property var cfg_clientSecretDefault
+    property var cfg_enableNotifications
+    property var cfg_enableNotificationsDefault
+    property var cfg_enableReminder
+    property var cfg_enableReminderDefault
+    property var cfg_reminderMinutes
+    property var cfg_reminderMinutesDefault
+    property var cfg_preferTimedHours
+    property var cfg_preferTimedHoursDefault
+    property var cfg_alignLeft
+    property var cfg_alignLeftDefault
+    property var cfg_showIcon
+    property var cfg_showIconDefault
+    property var cfg_hideEventTitle
+    property var cfg_hideEventTitleDefault
+    property var cfg_maxTitleLength
+    property var cfg_maxTitleLengthDefault
+
     ExecUtil {
         id: executable
     }
