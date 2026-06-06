@@ -4,19 +4,27 @@
 function request(opt, callback) {
     var xhr = new XMLHttpRequest()
     var method = opt.method || "GET"
+    var done = false
+    function finish(err, text, x) {
+        if (done) return
+        done = true
+        callback(err, text, x)
+    }
     Log.log("api", method + " " + opt.url)
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status >= 200 && xhr.status < 300) {
                 Log.log("api", method + " " + opt.url + " → " + xhr.status)
-                callback(null, xhr.responseText, xhr)
+                finish(null, xhr.responseText, xhr)
             } else {
-                Log.log("api", method + " " + opt.url + " → ERROR " + xhr.status + " " + xhr.statusText)
-                callback(xhr.status + " " + xhr.statusText, xhr.responseText, xhr)
+                var errMsg = (xhr.status || "network_error") + " " + xhr.statusText
+                Log.log("api", method + " " + opt.url + " → ERROR " + errMsg)
+                finish(errMsg, xhr.responseText, xhr)
             }
         }
     }
     xhr.open(method, opt.url)
+    xhr.timeout = opt.timeout || 15000
     if (opt.headers) {
         for (var key in opt.headers) {
             xhr.setRequestHeader(key, opt.headers[key])

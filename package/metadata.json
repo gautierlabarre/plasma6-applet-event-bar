@@ -6,6 +6,7 @@
         "Id": "org.kde.plasma.eventbar",
         "Category": "Date and Time",
         "Version": "0.1.0",
+        "License": "MIT",
         "Authors": [
             {
                 "Name": "Gautier LABARRE"

@@ -195,6 +195,10 @@ msgstr ""
 msgid "Could not load events. Check your connection."
 msgstr ""
 
+#: contents/ui/main.qml
+msgid "Could not load events (timeout)"
+msgstr ""
+
 #: contents/ui/FullView.qml
 msgid "Retry"
 msgstr ""
