@@ -3,12 +3,16 @@
 .pragma library
 .import "Log.js" as Log
 
-// Build a notify-send command array for events with a Meet link (uses --wait for action handling)
+function sanitizeTimeout(timeout) {
+    return parseInt(timeout, 10) || 0
+}
+
 function buildMeetNotifyCommand(title, body, icon, timeout, meetUrl, joinLabel) {
-    Log.log("notif", "Building Meet notification: \"" + title + "\" timeout=" + timeout + "ms")
+    const safeTimeout = sanitizeTimeout(timeout)
+    Log.log("notif", "Building Meet notification: \"" + title + "\" timeout=" + safeTimeout + "ms")
     return [
         "sh", "-c",
-        "A=$(notify-send --wait -t " + timeout + " -i '" + shellEscape(icon) + "' -a 'Event Bar'"
+        "A=$(notify-send --wait -t " + safeTimeout + " -i '" + shellEscape(icon) + "' -a 'Event Bar'"
         + " --action='default=" + shellEscape(joinLabel) + "'"
         + " --action='meet=" + shellEscape(joinLabel) + "'"
         + " '" + shellEscape(title) + "'"
@@ -18,10 +22,10 @@ function buildMeetNotifyCommand(title, body, icon, timeout, meetUrl, joinLabel) 
     ]
 }
 
-// Build a simple notify-send command array (no action, fire-and-forget)
 function buildSimpleNotifyCommand(title, body, icon, timeout) {
-    Log.log("notif", "Building notification: \"" + title + "\" timeout=" + timeout + "ms")
-    const cmd = ["notify-send", "-t", String(timeout), "-i", icon, "-a", "Event Bar", title]
+    const safeTimeout = sanitizeTimeout(timeout)
+    Log.log("notif", "Building notification: \"" + title + "\" timeout=" + safeTimeout + "ms")
+    const cmd = ["notify-send", "-t", String(safeTimeout), "-i", icon, "-a", "Event Bar", title]
     if (body !== "") cmd.push(body)
     return cmd
 }
