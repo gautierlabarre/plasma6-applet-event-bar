@@ -152,6 +152,9 @@ msgstr "Error de autenticación. Intenta iniciar sesión de nuevo."
 msgid "Could not load events. Check your connection."
 msgstr "No se pudieron cargar los eventos. Comprueba tu conexión."
 
+msgid "Could not load events (timeout)"
+msgstr "No se pudieron cargar los eventos (tiempo agotado)"
+
 msgid "Retry"
 msgstr "Reintentar"
 

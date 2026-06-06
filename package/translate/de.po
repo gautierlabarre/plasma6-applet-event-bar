@@ -152,6 +152,9 @@ msgstr "Authentifizierung fehlgeschlagen. Bitte erneut anmelden."
 msgid "Could not load events. Check your connection."
 msgstr "Termine konnten nicht geladen werden. Prüfen Sie Ihre Verbindung."
 
+msgid "Could not load events (timeout)"
+msgstr "Termine konnten nicht geladen werden (Zeitüberschreitung)"
+
 msgid "Retry"
 msgstr "Erneut versuchen"
 

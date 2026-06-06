@@ -142,6 +142,7 @@ package/contents/
 │   ├── ConfigNotifications.qml    # Notifications config
 │   └── lib/
 │       ├── CalendarApi.js         # ~90 lines - Google API (.pragma library)
+│       ├── EventLogic.js         # Event selection & color logic (.pragma library)
 │       ├── Log.js                 # Debug logging singleton (.pragma library)
 │       ├── Notifications.js       # ~30 lines - notify-send builders (.pragma library)
 │       ├── Requests.js            # HTTP helpers

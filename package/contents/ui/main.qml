@@ -4,6 +4,7 @@ import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 import "lib/Requests.js" as Requests
 import "lib/CalendarApi.js" as CalendarApi
+import "lib/EventLogic.js" as EventLogic
 import "lib/Notifications.js" as Notifications
 import "lib/Log.js" as Log
 import "lib"
@@ -13,8 +14,14 @@ PlasmoidItem {
 
     preferredRepresentation: compactRepresentation
 
+    readonly property int msPerMinute: 60000
+    readonly property int msPerHour: 3600000
+    readonly property int reminderNotifTimeoutMs: 10000
+    readonly property int refreshIntervalMs: 5 * msPerMinute
+
     property bool isLoggedIn: plasmoid.configuration.refreshToken !== ""
     property bool isLoading: false
+    property string errorMessage: ""
 
     // Displayed in the panel's compact representation
     property string nextEventTitle: ""
@@ -38,16 +45,13 @@ PlasmoidItem {
 
     // --- Timers ---
 
-    // Incremented on each minute tick to force re-evaluation of panel text binding
     property int timerTick: 0
 
-    // Milliseconds until the next system clock minute boundary
     function msUntilNextMinute() {
-        var ms = 60000 - (Date.now() % 60000)
-        return ms < 100 ? 60000 : ms
+        const ms = msPerMinute - (Date.now() % msPerMinute)
+        return ms < 100 ? msPerMinute : ms
     }
 
-    // Fires exactly on each minute boundary, synced with the system clock
     Timer {
         id: minuteTimer
         interval: root.msUntilNextMinute()
@@ -65,10 +69,9 @@ PlasmoidItem {
         id: eventsModel
     }
 
-    // Refetch events from Google Calendar every 5 minutes
     Timer {
         id: refreshTimer
-        interval: 5 * 60 * 1000
+        interval: root.refreshIntervalMs
         repeat: true
         running: isLoggedIn
         onTriggered: {
@@ -77,7 +80,18 @@ PlasmoidItem {
         }
     }
 
-    // Reset state when user signs out
+    Timer {
+        id: fetchTimeout
+        interval: Requests.DEFAULT_TIMEOUT_MS
+        onTriggered: {
+            if (isLoading) {
+                Log.log("api", "Fetch timeout (15s), forcing error state")
+                isLoading = false
+                errorMessage = i18n("Could not load events (timeout)")
+            }
+        }
+    }
+
     Connections {
         target: plasmoid.configuration
         function onRefreshTokenChanged() {
@@ -87,13 +101,10 @@ PlasmoidItem {
             } else {
                 Log.log("auth", "Signed out, clearing state")
                 eventsModel.clear()
-                nextEventTitle = ""
-                nextEventDuration = ""
-                nextEventStartMs = 0
-                nextEventIsAllDay = false
-                nextEventSectionDate = ""
+                clearPanelEvent()
                 colorsLoaded = false
                 calendarDefaultColor = ""
+                errorMessage = ""
             }
         }
         function onPreferTimedHoursChanged() {
@@ -111,48 +122,39 @@ PlasmoidItem {
         if (isLoggedIn) fetchEvents()
     }
 
-    // --- Formatting helpers (need i18n, must stay in QML) ---
+    // --- Panel event selection ---
+
+    function clearPanelEvent() {
+        nextEventTitle = ""
+        nextEventDuration = ""
+        nextEventStartMs = 0
+        nextEventIsAllDay = false
+        nextEventSectionDate = ""
+    }
 
     function updatePanelEvent() {
-        var todayLabel = i18n("Today")
-        if (eventsModel.count > 0) {
-            var bestIdx = -1
-            var preferHours = plasmoid.configuration.preferTimedHours
-            var now = Date.now()
-            for (var k = 0; k < eventsModel.count; k++) {
-                var ev = eventsModel.get(k)
-                if (ev.sectionDate !== todayLabel) continue
-                if (ev.responseStatus !== "accepted") continue
-                if (bestIdx < 0) bestIdx = k
-                if (preferHours > 0 && ev.startMs > 0 && ev.startMs - now < preferHours * 3600000) {
-                    bestIdx = k
-                    break
-                }
-            }
-            if (bestIdx >= 0) {
-                var best = eventsModel.get(bestIdx)
-                nextEventTitle = best.title
-                nextEventDuration = best.duration
-                nextEventIsAllDay = best.time === ""
-                nextEventStartMs = best.startMs
-                nextEventSectionDate = best.sectionDate
-                Log.log("events", "Panel event: \"" + best.title + "\" startMs=" + best.startMs + " allDay=" + nextEventIsAllDay)
-            } else {
-                nextEventTitle = ""
-                nextEventDuration = ""
-                nextEventStartMs = 0
-                nextEventIsAllDay = false
-                nextEventSectionDate = ""
-                Log.log("events", "No event to show in panel today")
-            }
+        if (eventsModel.count === 0) {
+            clearPanelEvent()
+            return
+        }
+        const bestIdx = EventLogic.findBestEventIndex(
+            eventsModel, i18n("Today"),
+            plasmoid.configuration.preferTimedHours, msPerHour)
+        if (bestIdx >= 0) {
+            const best = eventsModel.get(bestIdx)
+            nextEventTitle = best.title
+            nextEventDuration = best.duration
+            nextEventIsAllDay = best.time === ""
+            nextEventStartMs = best.startMs
+            nextEventSectionDate = best.sectionDate
+            Log.log("events", "Panel event: \"" + best.title + "\" startMs=" + best.startMs + " allDay=" + nextEventIsAllDay)
         } else {
-            nextEventTitle = ""
-            nextEventDuration = ""
-            nextEventStartMs = 0
-            nextEventIsAllDay = false
-            nextEventSectionDate = ""
+            clearPanelEvent()
+            Log.log("events", "No event to show in panel today")
         }
     }
+
+    // --- Formatting helpers (need i18n, must stay in QML) ---
 
     function formatEventTime(startStr, isAllDay) {
         if (isAllDay) return ""
@@ -161,28 +163,28 @@ PlasmoidItem {
 
     function formatDuration(startStr, endStr, isAllDay) {
         if (isAllDay) return ""
-        var startMs = new Date(startStr).getTime()
-        var endMs = new Date(endStr).getTime()
-        var minutes = Math.round((endMs - startMs) / 60000)
+        const startMs = new Date(startStr).getTime()
+        const endMs = new Date(endStr).getTime()
+        const minutes = Math.round((endMs - startMs) / msPerMinute)
         if (minutes < 60) return i18nc("short duration in minutes", "%1min", minutes)
-        var hours = Math.floor(minutes / 60)
+        const hours = Math.floor(minutes / 60)
         if (hours >= 24) {
-            var days = Math.floor(hours / 24)
-            var remH = hours % 24
+            const days = Math.floor(hours / 24)
+            const remH = hours % 24
             if (remH === 0) return i18nc("short duration in days", "%1d", days)
             return i18nc("short duration days and hours", "%1d %2h", days, remH)
         }
-        var rem = minutes % 60
+        const rem = minutes % 60
         if (rem === 0) return i18nc("short duration in hours", "%1h", hours)
         return i18nc("short duration hours and minutes", "%1h%2", hours, rem)
     }
 
     function formatSectionDate(startStr, isAllDay) {
-        var eventDate = new Date(startStr)
-        var now = new Date()
-        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        var eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
-        var diffDays = Math.round((eventDay - today) / (1000 * 60 * 60 * 24))
+        const eventDate = new Date(startStr)
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate())
+        const diffDays = Math.round((eventDay - today) / (24 * msPerHour))
         if (diffDays === 0) return i18n("Today")
         if (diffDays === 1) return i18n("Tomorrow")
         return Qt.locale().dayName(eventDate.getDay(), Locale.LongFormat) + " " + eventDate.getDate()
@@ -190,33 +192,34 @@ PlasmoidItem {
 
     // --- Notifications ---
 
-    // Checks all events for reminder and start-time notifications
+    function markNotified(notifKey) {
+        const updated = notifiedEvents
+        updated[notifKey] = true
+        notifiedEvents = updated
+    }
+
     function checkEventNotifications() {
-        var now = Date.now()
-        for (var i = 0; i < eventsModel.count; i++) {
-            var event = eventsModel.get(i)
+        const now = Date.now()
+        for (let i = 0; i < eventsModel.count; i++) {
+            const event = eventsModel.get(i)
             if (event.startMs <= 0) continue
-            var key = String(event.startMs)
-            var timeUntil = event.startMs - now
+            const key = String(event.startMs)
+            const timeUntil = event.startMs - now
 
             if (plasmoid.configuration.enableReminder) {
-                var reminderMs = plasmoid.configuration.reminderMinutes * 60000
-                var reminderKey = "reminder_" + key
+                const reminderMs = plasmoid.configuration.reminderMinutes * msPerMinute
+                const reminderKey = "reminder_" + key
                 if (timeUntil > 0 && timeUntil <= reminderMs && !notifiedEvents[reminderKey]) {
-                    var u1 = notifiedEvents
-                    u1[reminderKey] = true
-                    notifiedEvents = u1
-                    Log.log("notif", "Sending reminder for \"" + event.title + "\" in " + Math.round(timeUntil / 60000) + "min")
+                    markNotified(reminderKey)
+                    Log.log("notif", "Sending reminder for \"" + event.title + "\" in " + Math.round(timeUntil / msPerMinute) + "min")
                     sendReminderNotification(event)
                 }
             }
 
             if (plasmoid.configuration.enableNotifications) {
-                var elapsed = now - event.startMs
-                if (elapsed >= 0 && elapsed < 60000 && !notifiedEvents[key]) {
-                    var u2 = notifiedEvents
-                    u2[key] = true
-                    notifiedEvents = u2
+                const elapsed = now - event.startMs
+                if (elapsed >= 0 && elapsed < msPerMinute && !notifiedEvents[key]) {
+                    markNotified(key)
                     Log.log("notif", "Sending start notification for \"" + event.title + "\"")
                     sendEventNotification(event)
                 }
@@ -224,35 +227,33 @@ PlasmoidItem {
         }
     }
 
-    // Reminder: fires X minutes before the event (transient, 10s)
     function sendReminderNotification(event) {
-        var title = i18n("Reminder: %1", event.title)
-        var minutes = plasmoid.configuration.reminderMinutes
-        var bodyParts = [i18n("In %1 minutes", minutes)]
+        const title = i18n("Reminder: %1", event.title)
+        const minutes = plasmoid.configuration.reminderMinutes
+        const bodyParts = [i18n("In %1 minutes", minutes)]
         if (event.location) bodyParts.push(event.location)
-        var body = bodyParts.join("\n")
-        var icon = event.hasMeet ? "camera-video" : "appointment-soon"
+        const body = bodyParts.join("\n")
+        const icon = event.hasMeet ? "camera-video" : "appointment-soon"
 
         if (event.hasMeet && event.meetUrl) {
             notifier.exec(Notifications.buildMeetNotifyCommand(
-                title, body, icon, 10000, event.meetUrl, i18n("Join")))
+                title, body, icon, reminderNotifTimeoutMs, event.meetUrl, i18n("Join")))
         } else {
-            notifier.exec(Notifications.buildSimpleNotifyCommand(title, body, icon, 10000))
+            notifier.exec(Notifications.buildSimpleNotifyCommand(title, body, icon, reminderNotifTimeoutMs))
         }
     }
 
-    // Start notification: fires when the event begins (persistent, stays until dismissed)
     function sendEventNotification(event) {
-        var title = i18n("%1 is starting", event.title)
-        var bodyParts = []
+        const title = i18n("%1 is starting", event.title)
+        const bodyParts = []
         if (event.time !== "") {
-            var timeLine = event.time
+            let timeLine = event.time
             if (event.duration !== "") timeLine += " · " + event.duration
             bodyParts.push(timeLine)
         }
         if (event.location) bodyParts.push(event.location)
-        var body = bodyParts.join("\n")
-        var icon = event.hasMeet ? "camera-video" : "appointment-soon"
+        const body = bodyParts.join("\n")
+        const icon = event.hasMeet ? "camera-video" : "appointment-soon"
 
         if (event.hasMeet && event.meetUrl) {
             notifier.exec(Notifications.buildMeetNotifyCommand(
@@ -267,56 +268,62 @@ PlasmoidItem {
     function fetchEvents() {
         if (!isLoggedIn) return
         isLoading = true
+        errorMessage = ""
+        fetchTimeout.restart()
         Log.log("api", "Fetching events...")
+        CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, onTokenReady)
+    }
 
-        CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, function(token) {
-            if (!token) {
-                Log.log("auth", "Failed to obtain access token")
-                isLoading = false
-                return
-            }
-            Log.log("auth", "Access token ready")
+    function onTokenReady(token) {
+        if (!token) {
+            Log.log("auth", "Failed to obtain access token")
+            fetchTimeout.stop()
+            isLoading = false
+            errorMessage = i18n("Authentication failed. Try signing in again.")
+            return
+        }
+        Log.log("auth", "Access token ready")
+        if (!colorsLoaded) {
+            CalendarApi.loadColors(token, Requests, function(colors, calColor) {
+                onColorsReady(colors, calColor, token)
+            })
+        } else {
+            loadEvents(token)
+        }
+    }
 
-            if (!colorsLoaded) {
-                CalendarApi.loadColors(token, Requests, function(colors, calColor) {
-                    Log.log("api", "Colors loaded: " + Object.keys(colors).length + " event colors, calendar=" + (calColor || "none"))
-                    eventColorMap = colors
-                    if (calColor) calendarDefaultColor = calColor
-                    colorsLoaded = true
-                    loadEvents(token)
-                })
-            } else {
-                loadEvents(token)
-            }
-        })
+    function onColorsReady(colors, calColor, token) {
+        Log.log("api", "Colors loaded: " + Object.keys(colors).length + " event colors, calendar=" + (calColor || "none"))
+        eventColorMap = colors
+        if (calColor) calendarDefaultColor = calColor
+        colorsLoaded = true
+        loadEvents(token)
     }
 
     function loadEvents(token) {
         CalendarApi.fetchEvents(token, Requests, function(items) {
+            fetchTimeout.stop()
             isLoading = false
             if (!items) {
                 Log.log("api", "fetchEvents returned null (error or empty response)")
+                errorMessage = i18n("Could not load events. Check your connection.")
                 return
             }
+            errorMessage = ""
             Log.log("events", "Processing " + items.length + " events from API")
 
             eventsModel.clear()
-            for (var i = 0; i < items.length; i++) {
-                var event = items[i]
-                var isAllDay = !event.start.dateTime
-                var start = event.start.dateTime || event.start.date
-                var end = event.end.dateTime || event.end.date
-                var hasMeet = !!(event.hangoutLink || event.conferenceData)
-                var responseStatus = CalendarApi.getResponseStatus(event)
+            for (let i = 0; i < items.length; i++) {
+                const event = items[i]
+                const isAllDay = !event.start.dateTime
+                const start = event.start.dateTime || event.start.date
+                const end = event.end.dateTime || event.end.date
+                const hasMeet = !!(event.hangoutLink || event.conferenceData)
+                const responseStatus = CalendarApi.getResponseStatus(event)
 
                 if (responseStatus === "declined") {
                     Log.log("events", "Skipping declined event: \"" + (event.summary || "(no title)") + "\"")
                     continue
-                }
-
-                var eventColor = calendarDefaultColor
-                if (event.colorId && eventColorMap[event.colorId]) {
-                    eventColor = eventColorMap[event.colorId]
                 }
 
                 eventsModel.append({
@@ -330,7 +337,7 @@ PlasmoidItem {
                     startMs: isAllDay ? 0 : new Date(start).getTime(),
                     sectionDate: formatSectionDate(start, isAllDay),
                     responseStatus: responseStatus,
-                    eventColor: eventColor
+                    eventColor: EventLogic.resolveEventColor(event, eventColorMap, calendarDefaultColor)
                 })
             }
 
@@ -360,6 +367,7 @@ PlasmoidItem {
     fullRepresentation: FullView {
         isLoggedIn: root.isLoggedIn
         isLoading: root.isLoading
+        errorMessage: root.errorMessage
         events: eventsModel
         hideOnWindowDeactivate: root.hideOnWindowDeactivate
         onRefreshClicked: root.fetchEvents()

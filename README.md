@@ -17,6 +17,8 @@ A KDE Plasma 6 applet that displays your upcoming Google Calendar events directl
 
 - KDE Plasma 6
 - Python 3 (for OAuth flow)
+- `notify-send` (for desktop notifications)
+- `xdg-open` (for opening URLs from notifications)
 - Google Calendar API credentials (Client ID + Secret)
 
 ### Install
