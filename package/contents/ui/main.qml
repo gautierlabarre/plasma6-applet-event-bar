@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 import "lib/Requests.js" as Requests
@@ -311,40 +310,39 @@ PlasmoidItem {
             }
             errorMessage = ""
             Log.log("events", "Processing " + items.length + " events from API")
-
-            eventsModel.clear()
-            for (let i = 0; i < items.length; i++) {
-                const event = items[i]
-                const isAllDay = !event.start.dateTime
-                const start = event.start.dateTime || event.start.date
-                const end = event.end.dateTime || event.end.date
-                const hasMeet = !!(event.hangoutLink || event.conferenceData)
-                const responseStatus = CalendarApi.getResponseStatus(event)
-
-                if (responseStatus === "declined") {
-                    Log.log("events", "Skipping declined event: \"" + (event.summary || "(no title)") + "\"")
-                    continue
-                }
-
-                eventsModel.append({
-                    time: formatEventTime(start, isAllDay),
-                    duration: formatDuration(start, end, isAllDay),
-                    title: event.summary || i18n("(no title)"),
-                    location: event.location || "",
-                    hasMeet: hasMeet,
-                    meetUrl: event.hangoutLink || "",
-                    eventUrl: event.htmlLink || "",
-                    startMs: isAllDay ? 0 : new Date(start).getTime(),
-                    sectionDate: formatSectionDate(start, isAllDay),
-                    responseStatus: responseStatus,
-                    eventColor: EventLogic.resolveEventColor(event, eventColorMap, calendarDefaultColor)
-                })
-            }
-
+            populateModel(items)
             updatePanelEvent()
             checkEventNotifications()
             Log.log("events", "Model updated: " + eventsModel.count + " events loaded")
         })
+    }
+
+    function populateModel(items) {
+        eventsModel.clear()
+        for (let i = 0; i < items.length; i++) {
+            const event = items[i]
+            const responseStatus = CalendarApi.getResponseStatus(event)
+            if (responseStatus === "declined") {
+                Log.log("events", "Skipping declined event: \"" + (event.summary || "(no title)") + "\"")
+                continue
+            }
+            const isAllDay = !event.start.dateTime
+            const start = event.start.dateTime || event.start.date
+            const end = event.end.dateTime || event.end.date
+            eventsModel.append({
+                time: formatEventTime(start, isAllDay),
+                duration: formatDuration(start, end, isAllDay),
+                title: event.summary || i18n("(no title)"),
+                location: event.location || "",
+                hasMeet: !!(event.hangoutLink || event.conferenceData),
+                meetUrl: event.hangoutLink || "",
+                eventUrl: event.htmlLink || "",
+                startMs: isAllDay ? 0 : new Date(start).getTime(),
+                sectionDate: formatSectionDate(start, isAllDay),
+                responseStatus: responseStatus,
+                eventColor: EventLogic.resolveEventColor(event, eventColorMap, calendarDefaultColor)
+            })
+        }
     }
 
     // --- Views ---

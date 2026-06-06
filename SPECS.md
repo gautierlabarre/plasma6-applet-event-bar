@@ -82,7 +82,7 @@ The applet displays the next event in the KDE panel with relative time and durat
 
 **"Google Account" page**
 - OAuth 2.0 flow: Client ID + Client Secret → Authorization code → Tokens
-- External Python script `lib/google-calendar-oauth.py` for local server
+- External Python script `scripts/google_oauth_server.py` for local server
 - Storage: `refreshToken` persisted, `accessToken` + `accessTokenExpiresAt` cached
 - Automatic token refresh if expired (5s margin)
 
@@ -147,11 +147,11 @@ package/contents/
 │       ├── Notifications.js       # ~30 lines - notify-send builders (.pragma library)
 │       ├── Requests.js            # HTTP helpers
 │       ├── ExecUtil.qml           # Plasma5Support.DataSource wrapper
-│       └── google-calendar-oauth.py # OAuth flow
 ├── config/
 │   ├── config.qml                 # Config pages
 │   └── main.xml                   # KConfig schema
-└── scripts/                       # (empty, OAuth script in lib/)
+└── scripts/
+    └── google_oauth_server.py # OAuth flow
 ```
 
 ### Responsibilities

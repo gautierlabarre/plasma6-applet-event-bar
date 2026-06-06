@@ -9,10 +9,10 @@ Plasma5Support.DataSource {
     property var callbacks: ({})
 
     onNewData: function(sourceName, data) {
-        var stdout = (data["stdout"] || "").trim()
-        var stderr = (data["stderr"] || "").trim()
-        var exitCode = data["exit code"] || 0
-        var exitStatus = data["exit status"] || 0
+        const stdout = (data["stdout"] || "").trim()
+        const stderr = (data["stderr"] || "").trim()
+        const exitCode = data["exit code"] || 0
+        const exitStatus = data["exit status"] || 0
 
         if (callbacks[sourceName]) {
             callbacks[sourceName](sourceName, exitCode, exitStatus, stdout, stderr)
