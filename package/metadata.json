@@ -7,6 +7,8 @@
         "Category": "Date and Time",
         "Version": "0.1.0",
         "License": "MIT",
+        "Website": "https://github.com/gautierlabarre/plasma6-applet-event-bar",
+        "BugReportUrl": "https://github.com/gautierlabarre/plasma6-applet-event-bar/issues",
         "Authors": [
             {
                 "Name": "Gautier LABARRE"
