@@ -15,6 +15,7 @@ PlasmoidItem {
 
     property bool isLoggedIn: plasmoid.configuration.refreshToken !== ""
     property bool isLoading: false
+    property string errorMessage: ""
 
     // Displayed in the panel's compact representation
     property string nextEventTitle: ""
@@ -77,6 +78,19 @@ PlasmoidItem {
         }
     }
 
+    // Safety net: if a fetch hangs longer than 15s, force error state
+    Timer {
+        id: fetchTimeout
+        interval: 15000
+        onTriggered: {
+            if (isLoading) {
+                Log.log("api", "Fetch timeout (15s), forcing error state")
+                isLoading = false
+                errorMessage = i18n("Could not load events (timeout)")
+            }
+        }
+    }
+
     // Reset state when user signs out
     Connections {
         target: plasmoid.configuration
@@ -94,6 +108,7 @@ PlasmoidItem {
                 nextEventSectionDate = ""
                 colorsLoaded = false
                 calendarDefaultColor = ""
+                errorMessage = ""
             }
         }
         function onPreferTimedHoursChanged() {
@@ -267,12 +282,16 @@ PlasmoidItem {
     function fetchEvents() {
         if (!isLoggedIn) return
         isLoading = true
+        errorMessage = ""
+        fetchTimeout.restart()
         Log.log("api", "Fetching events...")
 
         CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, function(token) {
             if (!token) {
                 Log.log("auth", "Failed to obtain access token")
+                fetchTimeout.stop()
                 isLoading = false
+                errorMessage = i18n("Authentication failed. Try signing in again.")
                 return
             }
             Log.log("auth", "Access token ready")
@@ -293,11 +312,14 @@ PlasmoidItem {
 
     function loadEvents(token) {
         CalendarApi.fetchEvents(token, Requests, function(items) {
+            fetchTimeout.stop()
             isLoading = false
             if (!items) {
                 Log.log("api", "fetchEvents returned null (error or empty response)")
+                errorMessage = i18n("Could not load events. Check your connection.")
                 return
             }
+            errorMessage = ""
             Log.log("events", "Processing " + items.length + " events from API")
 
             eventsModel.clear()
@@ -360,6 +382,7 @@ PlasmoidItem {
     fullRepresentation: FullView {
         isLoggedIn: root.isLoggedIn
         isLoading: root.isLoading
+        errorMessage: root.errorMessage
         events: eventsModel
         hideOnWindowDeactivate: root.hideOnWindowDeactivate
         onRefreshClicked: root.fetchEvents()
