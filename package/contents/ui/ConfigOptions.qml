@@ -13,6 +13,7 @@ KCM.SimpleKCM {
     property bool cfg_showIcon: plasmoid.configuration.showIcon
     property bool cfg_hideEventTitle: plasmoid.configuration.hideEventTitle
     property int cfg_maxTitleLength: plasmoid.configuration.maxTitleLength
+    property bool cfg_enableDebugLogs: plasmoid.configuration.enableDebugLogs
 
     // Plasma injects all cfg_* properties into every config page
     property var cfg_clientId
@@ -36,6 +37,7 @@ KCM.SimpleKCM {
     property var cfg_showIconDefault
     property var cfg_hideEventTitleDefault
     property var cfg_maxTitleLengthDefault
+    property var cfg_enableDebugLogsDefault
 
     ColumnLayout {
         anchors.left: parent.left
@@ -114,6 +116,27 @@ KCM.SimpleKCM {
                 from: 10
                 to: 40
                 onValueModified: cfg_maxTitleLength = value
+            }
+        }
+
+        Kirigami.Heading {
+            level: 4
+            text: i18n("Debug")
+            Layout.topMargin: Kirigami.Units.largeSpacing
+        }
+
+        Kirigami.Separator {
+            Layout.fillWidth: true
+        }
+
+        Kirigami.FormLayout {
+            Layout.fillWidth: true
+            wideMode: true
+
+            QQC2.Switch {
+                Kirigami.FormData.label: i18n("Enable debug logs")
+                checked: cfg_enableDebugLogs
+                onToggled: cfg_enableDebugLogs = checked
             }
         }
     }
