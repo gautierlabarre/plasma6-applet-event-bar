@@ -5,6 +5,7 @@ import org.kde.kirigami as Kirigami
 import "lib/Requests.js" as Requests
 import "lib/CalendarApi.js" as CalendarApi
 import "lib/Notifications.js" as Notifications
+import "lib/Log.js" as Log
 import "lib"
 
 PlasmoidItem {
@@ -53,6 +54,7 @@ PlasmoidItem {
         running: root.isLoggedIn
         onTriggered: {
             root.timerTick++
+            Log.log("timer", "Minute tick #" + root.timerTick)
             checkEventNotifications()
             interval = root.msUntilNextMinute()
             restart()
@@ -69,7 +71,10 @@ PlasmoidItem {
         interval: 5 * 60 * 1000
         repeat: true
         running: isLoggedIn
-        onTriggered: fetchEvents()
+        onTriggered: {
+            Log.log("timer", "Refresh timer fired, fetching events")
+            fetchEvents()
+        }
     }
 
     // Reset state when user signs out
@@ -77,8 +82,10 @@ PlasmoidItem {
         target: plasmoid.configuration
         function onRefreshTokenChanged() {
             if (plasmoid.configuration.refreshToken !== "") {
+                Log.log("auth", "Refresh token set, fetching events")
                 fetchEvents()
             } else {
+                Log.log("auth", "Signed out, clearing state")
                 eventsModel.clear()
                 nextEventTitle = ""
                 nextEventDuration = ""
@@ -92,9 +99,15 @@ PlasmoidItem {
         function onPreferTimedHoursChanged() {
             updatePanelEvent()
         }
+        function onEnableDebugLogsChanged() {
+            Log.enabled = plasmoid.configuration.enableDebugLogs
+            Log.log("config", "Debug logs " + (Log.enabled ? "enabled" : "disabled"))
+        }
     }
 
     Component.onCompleted: {
+        Log.enabled = plasmoid.configuration.enableDebugLogs
+        Log.log("init", "Applet loaded, isLoggedIn=" + isLoggedIn)
         if (isLoggedIn) fetchEvents()
     }
 
@@ -123,12 +136,14 @@ PlasmoidItem {
                 nextEventIsAllDay = best.time === ""
                 nextEventStartMs = best.startMs
                 nextEventSectionDate = best.sectionDate
+                Log.log("events", "Panel event: \"" + best.title + "\" startMs=" + best.startMs + " allDay=" + nextEventIsAllDay)
             } else {
                 nextEventTitle = ""
                 nextEventDuration = ""
                 nextEventStartMs = 0
                 nextEventIsAllDay = false
                 nextEventSectionDate = ""
+                Log.log("events", "No event to show in panel today")
             }
         } else {
             nextEventTitle = ""
@@ -191,6 +206,7 @@ PlasmoidItem {
                     var u1 = notifiedEvents
                     u1[reminderKey] = true
                     notifiedEvents = u1
+                    Log.log("notif", "Sending reminder for \"" + event.title + "\" in " + Math.round(timeUntil / 60000) + "min")
                     sendReminderNotification(event)
                 }
             }
@@ -201,6 +217,7 @@ PlasmoidItem {
                     var u2 = notifiedEvents
                     u2[key] = true
                     notifiedEvents = u2
+                    Log.log("notif", "Sending start notification for \"" + event.title + "\"")
                     sendEventNotification(event)
                 }
             }
@@ -250,12 +267,19 @@ PlasmoidItem {
     function fetchEvents() {
         if (!isLoggedIn) return
         isLoading = true
+        Log.log("api", "Fetching events...")
 
         CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, function(token) {
-            if (!token) { isLoading = false; return }
+            if (!token) {
+                Log.log("auth", "Failed to obtain access token")
+                isLoading = false
+                return
+            }
+            Log.log("auth", "Access token ready")
 
             if (!colorsLoaded) {
                 CalendarApi.loadColors(token, Requests, function(colors, calColor) {
+                    Log.log("api", "Colors loaded: " + Object.keys(colors).length + " event colors, calendar=" + (calColor || "none"))
                     eventColorMap = colors
                     if (calColor) calendarDefaultColor = calColor
                     colorsLoaded = true
@@ -270,7 +294,11 @@ PlasmoidItem {
     function loadEvents(token) {
         CalendarApi.fetchEvents(token, Requests, function(items) {
             isLoading = false
-            if (!items) return
+            if (!items) {
+                Log.log("api", "fetchEvents returned null (error or empty response)")
+                return
+            }
+            Log.log("events", "Processing " + items.length + " events from API")
 
             eventsModel.clear()
             for (var i = 0; i < items.length; i++) {
@@ -281,7 +309,10 @@ PlasmoidItem {
                 var hasMeet = !!(event.hangoutLink || event.conferenceData)
                 var responseStatus = CalendarApi.getResponseStatus(event)
 
-                if (responseStatus === "declined") continue
+                if (responseStatus === "declined") {
+                    Log.log("events", "Skipping declined event: \"" + (event.summary || "(no title)") + "\"")
+                    continue
+                }
 
                 var eventColor = calendarDefaultColor
                 if (event.colorId && eventColorMap[event.colorId]) {
@@ -305,6 +336,7 @@ PlasmoidItem {
 
             updatePanelEvent()
             checkEventNotifications()
+            Log.log("events", "Model updated: " + eventsModel.count + " events loaded")
         })
     }
 

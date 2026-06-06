@@ -1,17 +1,22 @@
 .pragma library
+.import "Log.js" as Log
 
 function request(opt, callback) {
     var xhr = new XMLHttpRequest()
+    var method = opt.method || "GET"
+    Log.log("api", method + " " + opt.url)
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status >= 200 && xhr.status < 300) {
+                Log.log("api", method + " " + opt.url + " → " + xhr.status)
                 callback(null, xhr.responseText, xhr)
             } else {
+                Log.log("api", method + " " + opt.url + " → ERROR " + xhr.status + " " + xhr.statusText)
                 callback(xhr.status + " " + xhr.statusText, xhr.responseText, xhr)
             }
         }
     }
-    xhr.open(opt.method || "GET", opt.url)
+    xhr.open(method, opt.url)
     if (opt.headers) {
         for (var key in opt.headers) {
             xhr.setRequestHeader(key, opt.headers[key])
@@ -44,6 +49,7 @@ function getJSON(opt, callback) {
             try {
                 callback(null, JSON.parse(data), xhr)
             } catch (e) {
+                Log.log("api", "JSON parse error: " + e.toString())
                 callback(e.toString(), null, xhr)
             }
         }
@@ -70,6 +76,7 @@ function postJSON(opt, callback) {
             try {
                 callback(null, JSON.parse(data), xhr)
             } catch (e) {
+                Log.log("api", "JSON parse error: " + e.toString())
                 callback(e.toString(), null, xhr)
             }
         }

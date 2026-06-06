@@ -36,6 +36,8 @@ KCM.SimpleKCM {
     property var cfg_hideEventTitleDefault
     property var cfg_maxTitleLength
     property var cfg_maxTitleLengthDefault
+    property var cfg_enableDebugLogs
+    property var cfg_enableDebugLogsDefault
 
     Kirigami.FormLayout {
         anchors.left: parent.left

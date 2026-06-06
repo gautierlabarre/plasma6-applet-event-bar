@@ -246,3 +246,11 @@ msgstr ""
 #: contents/ui/CompactView.qml
 msgid "No events today"
 msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Debug"
+msgstr ""
+
+#: contents/ui/ConfigOptions.qml
+msgid "Enable debug logs"
+msgstr ""
