@@ -1,24 +1,34 @@
 .pragma library
 .import "Log.js" as Log
 
+var DEFAULT_TIMEOUT_MS = 15000
+
 function request(opt, callback) {
-    var xhr = new XMLHttpRequest()
-    var method = opt.method || "GET"
+    const xhr = new XMLHttpRequest()
+    const method = opt.method || "GET"
+    let done = false
+    function finish(err, text, x) {
+        if (done) return
+        done = true
+        callback(err, text, x)
+    }
     Log.log("api", method + " " + opt.url)
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status >= 200 && xhr.status < 300) {
                 Log.log("api", method + " " + opt.url + " → " + xhr.status)
-                callback(null, xhr.responseText, xhr)
+                finish(null, xhr.responseText, xhr)
             } else {
-                Log.log("api", method + " " + opt.url + " → ERROR " + xhr.status + " " + xhr.statusText)
-                callback(xhr.status + " " + xhr.statusText, xhr.responseText, xhr)
+                const errMsg = (xhr.status || "network_error") + " " + xhr.statusText
+                Log.log("api", method + " " + opt.url + " → ERROR " + errMsg)
+                finish(errMsg, xhr.responseText, xhr)
             }
         }
     }
     xhr.open(method, opt.url)
+    xhr.timeout = opt.timeout || DEFAULT_TIMEOUT_MS
     if (opt.headers) {
-        for (var key in opt.headers) {
+        for (const key in opt.headers) {
             xhr.setRequestHeader(key, opt.headers[key])
         }
     }
@@ -31,8 +41,8 @@ function post(opt, callback) {
     opt.headers["Content-Type"] = "application/x-www-form-urlencoded"
 
     if (typeof opt.data === "object") {
-        var parts = []
-        for (var key in opt.data) {
+        const parts = []
+        for (const key in opt.data) {
             parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(opt.data[key]))
         }
         opt.data = parts.join("&")
@@ -62,8 +72,8 @@ function postJSON(opt, callback) {
     opt.headers["Content-Type"] = "application/x-www-form-urlencoded"
 
     if (typeof opt.data === "object") {
-        var parts = []
-        for (var key in opt.data) {
+        const parts = []
+        for (const key in opt.data) {
             parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(opt.data[key]))
         }
         opt.data = parts.join("&")

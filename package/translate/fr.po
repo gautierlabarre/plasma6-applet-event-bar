@@ -152,6 +152,9 @@ msgstr "Échec de l'authentification. Essayez de vous reconnecter."
 msgid "Could not load events. Check your connection."
 msgstr "Impossible de charger les événements. Vérifiez votre connexion."
 
+msgid "Could not load events (timeout)"
+msgstr "Impossible de charger les événements (délai dépassé)"
+
 msgid "Retry"
 msgstr "Réessayer"
 
