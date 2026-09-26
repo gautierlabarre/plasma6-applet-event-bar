@@ -136,7 +136,8 @@ KCM.SimpleKCM {
         statusMessage = ""
 
         const scriptPath = Qt.resolvedUrl("../scripts/google_oauth_server.py").toString().replace("file://", "")
-        const scope = "https://www.googleapis.com/auth/calendar.readonly"
+        // calendar.events is needed to respond to invitations
+        const scope = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events"
 
         Log.log("auth", "Starting OAuth server: " + scriptPath)
         executable.exec(

@@ -250,3 +250,27 @@ msgstr ""
 #: contents/ui/ConfigOptions.qml
 msgid "Enable debug logs"
 msgstr ""
+
+#: contents/ui/EventItem.qml
+msgid "Accept"
+msgstr ""
+
+#: contents/ui/EventItem.qml
+msgid "Accepting..."
+msgstr ""
+
+#: contents/ui/EventItem.qml
+msgid "Decline"
+msgstr ""
+
+#: contents/ui/EventItem.qml
+msgid "Declining..."
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Could not respond to the invitation."
+msgstr ""
+
+#: contents/ui/main.qml
+msgid "Missing permission to respond to invitations. Sign out and sign in again."
+msgstr ""

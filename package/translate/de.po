@@ -193,3 +193,21 @@ msgstr "Debug"
 
 msgid "Enable debug logs"
 msgstr "Debug-Protokollierung aktivieren"
+
+msgid "Accept"
+msgstr "Annehmen"
+
+msgid "Accepting..."
+msgstr "Wird angenommen..."
+
+msgid "Decline"
+msgstr "Ablehnen"
+
+msgid "Declining..."
+msgstr "Wird abgelehnt..."
+
+msgid "Could not respond to the invitation."
+msgstr "Auf die Einladung konnte nicht geantwortet werden."
+
+msgid "Missing permission to respond to invitations. Sign out and sign in again."
+msgstr "Fehlende Berechtigung zum Beantworten von Einladungen. Bitte ab- und erneut anmelden."
