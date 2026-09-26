@@ -193,3 +193,21 @@ msgstr "Depuración"
 
 msgid "Enable debug logs"
 msgstr "Activar registros de depuración"
+
+msgid "Accept"
+msgstr "Aceptar"
+
+msgid "Accepting..."
+msgstr "Aceptando..."
+
+msgid "Decline"
+msgstr "Rechazar"
+
+msgid "Declining..."
+msgstr "Rechazando..."
+
+msgid "Could not respond to the invitation."
+msgstr "No se pudo responder a la invitación."
+
+msgid "Missing permission to respond to invitations. Sign out and sign in again."
+msgstr "Falta el permiso para responder a invitaciones. Cierra sesión y vuelve a iniciarla."

@@ -50,11 +50,18 @@ The applet displays the next event in the KDE panel with relative time and durat
 - Left colored border (3px): Google Calendar event color or default color
 - Left column (5 grid units): time HH:mm or "All day" (italic, opacity 0.7) + duration
 - Right column: title + camera icon if Meet + location (opacity 0.7)
-- Opacity 0.6 if tentative/needsAction event (not accepted)
+- Opacity 0.6 if tentative/needsAction event (not accepted), applied to event content only
+- "Accept" / "Decline" buttons on a second line, aligned with the title column, on pending invitations (`needsAction` or `tentative`, with a `self` attendee)
+  - Click: sends the response to Google; the clicked button shows "Accepting..." / "Declining...", both are disabled during the request
+  - Accept success: event is marked accepted locally, panel event is re-evaluated immediately (the event can now appear in the panel), then events are refetched
+  - Decline success: event is removed from the list locally (declined events are filtered out), panel event is re-evaluated, then events are refetched
+  - On failure: inline error banner ("Could not respond to the invitation.", or "Missing permission to respond to invitations. Sign out and sign in again." on HTTP 403)
+  - Recurring events: only the displayed occurrence is answered (`singleEvents=true` instance id)
 - Click: opens Meet URL if available, otherwise event URL
 
 **Buttons**
 - Refresh: reloads events (disabled if loading)
+- Accept / Decline (per pending invitation): see Event item
 - Pin: toggles `hideOnWindowDeactivate` (KDE standard style: `window-pin`)
 
 ### 3. Notifications
@@ -111,6 +118,7 @@ Section *Debug*:
 - `GET /calendar/v3/colors`: color palette (once, cached)
 - `GET /users/me/calendarList/primary`: default calendar color
 - `GET /calendars/primary/events`: events (next 7 days, max 20, `singleEvents=true`, `orderBy=startTime`)
+- `PATCH /calendars/primary/events/{eventId}?sendUpdates=all`: accept or decline an invitation. Body only contains the user's attendee entry with `attendeesOmitted: true`, so other attendees are untouched
 
 **Refresh frequency**
 - Auto: every 5 minutes (if logged in)
@@ -179,7 +187,7 @@ package/contents/
 - Auto-provided by ListView via model roles
 
 **CalendarApi.js** (.pragma library)
-- Pure functions: `ensureAccessToken(config, Requests, callback)`, `loadColors()`, `fetchEvents()`, `getResponseStatus()`
+- Pure functions: `ensureAccessToken(config, Requests, callback)`, `loadColors()`, `fetchEvents()`, `respondToEvent()`, `getSelfEmail()`, `getResponseStatus()`
 - No QML/i18n dependencies
 - Mutates `config.accessToken` and `config.accessTokenExpiresAt` directly
 
@@ -226,6 +234,7 @@ package/contents/
 - API errors (token refresh, event fetch) are displayed in the popup via `errorMessage` property
 - Error state: warning icon + translated message + "Retry" button (only when no cached events)
 - If cached events exist during an error, they remain visible (error clears on next successful fetch)
+- Inline error banner (cached events + error) wraps long messages instead of eliding them
 - Errors are logged to journal via `console.warn("[EventBar] ...")`
 - `errorMessage` is cleared on successful fetch, on new fetch attempt, and on logout
 - Safety timeout (`fetchTimeout`, 15s): forces `isLoading = false` and sets error if XHR hangs (e.g. network down)
@@ -233,11 +242,13 @@ package/contents/
 ### HTTP Requests
 - All requests have a 15s timeout (`xhr.timeout`) with guard against double callback
 - Request errors include status code or `"network_error"` prefix
+- Helpers: `getJSON`, `post`, `postJSON` (form-encoded), `patchJSON` (JSON body); callbacks receive `(err, data, xhr)` so callers can inspect `xhr.status`
 
 ### Google Calendar API
 - OAuth 2.0: refresh token stored, access token volatile
 - Rate limiting: not handled (low usage: 1 req/5min)
-- Scopes: `calendar.readonly`
+- Scopes: `calendar.readonly` (colors, calendar list) + `calendar.events` (respond to invitations)
+- Tokens granted before `calendar.events` was added only have `calendar.readonly`: responding returns 403, user must sign out and sign in again
 
 ## Extension Points
 
@@ -258,6 +269,9 @@ package/contents/
 - Panel: verify left alignment option
 - Panel: verify all-day event priority vs timed events (preferTimedHours threshold)
 - Popup: verify grouping by date, scroll, colors, Meet click
+- Popup: accept a pending invitation for today → button disappears, event becomes opaque and shows in panel if it is the best candidate
+- Popup: decline a pending invitation → event disappears from the list (and from the panel if it was shown)
+- Popup: accept/decline with an old token (readonly scope) → 403 error banner asking to sign in again
 - Popup: verify error state (network down → warning + retry button)
 - Popup: verify inline error banner when cached events + error
 - Timer: verify clock sync (transition from one minute to next)

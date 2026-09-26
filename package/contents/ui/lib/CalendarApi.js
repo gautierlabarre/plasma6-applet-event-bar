@@ -105,6 +105,39 @@ function fetchEvents(token, Requests, callback) {
     })
 }
 
+// Updates only the current user's response (attendeesOmitted), leaving other
+// attendees untouched. Callback receives (ok, httpStatus).
+function respondToEvent(token, Requests, eventId, selfEmail, responseStatus, callback) {
+    const url = "https://www.googleapis.com/calendar/v3/calendars/primary/events/"
+        + encodeURIComponent(eventId)
+        + "?sendUpdates=all"
+
+    Log.log("api", "Responding \"" + responseStatus + "\" to event " + eventId)
+    Requests.patchJSON({
+        url: url,
+        headers: { "Authorization": "Bearer " + token },
+        data: {
+            attendees: [{ email: selfEmail, responseStatus: responseStatus }],
+            attendeesOmitted: true
+        }
+    }, function(err, data, xhr) {
+        if (err) {
+            Log.log("api", "respondToEvent failed: " + err)
+            callback(false, xhr ? xhr.status : 0)
+            return
+        }
+        callback(true, xhr.status)
+    })
+}
+
+function getSelfEmail(event) {
+    if (!event.attendees) return ""
+    for (let i = 0; i < event.attendees.length; i++) {
+        if (event.attendees[i].self) return event.attendees[i].email || ""
+    }
+    return ""
+}
+
 function getResponseStatus(event) {
     if (!event.attendees) return "accepted"
     for (let i = 0; i < event.attendees.length; i++) {

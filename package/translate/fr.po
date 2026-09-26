@@ -193,3 +193,21 @@ msgstr "Débogage"
 
 msgid "Enable debug logs"
 msgstr "Activer les logs de débogage"
+
+msgid "Accept"
+msgstr "Accepter"
+
+msgid "Accepting..."
+msgstr "Acceptation..."
+
+msgid "Decline"
+msgstr "Refuser"
+
+msgid "Declining..."
+msgstr "Refus..."
+
+msgid "Could not respond to the invitation."
+msgstr "Impossible de répondre à l'invitation."
+
+msgid "Missing permission to respond to invitations. Sign out and sign in again."
+msgstr "Autorisation manquante pour répondre aux invitations. Déconnectez-vous puis reconnectez-vous."

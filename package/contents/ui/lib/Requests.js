@@ -66,6 +66,26 @@ function getJSON(opt, callback) {
     })
 }
 
+function patchJSON(opt, callback) {
+    opt.method = "PATCH"
+    if (!opt.headers) opt.headers = {}
+    opt.headers["Content-Type"] = "application/json"
+    if (typeof opt.data === "object") opt.data = JSON.stringify(opt.data)
+
+    request(opt, function(err, data, xhr) {
+        if (err) {
+            callback(err, null, xhr)
+        } else {
+            try {
+                callback(null, JSON.parse(data), xhr)
+            } catch (e) {
+                Log.log("api", "JSON parse error: " + e.toString())
+                callback(e.toString(), null, xhr)
+            }
+        }
+    })
+}
+
 function postJSON(opt, callback) {
     opt.method = "POST"
     if (!opt.headers) opt.headers = {}

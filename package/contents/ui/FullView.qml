@@ -12,9 +12,12 @@ ColumnLayout {
     required property string errorMessage
     required property var events
     required property bool hideOnWindowDeactivate
+    required property string respondingEventId
+    required property string respondingStatus
 
     signal refreshClicked()
     signal togglePin()
+    signal respondClicked(string eventId, string selfEmail, string responseStatus)
 
     Layout.minimumWidth: Kirigami.Units.gridUnit * 18
     Layout.minimumHeight: Kirigami.Units.gridUnit * 14
@@ -135,7 +138,7 @@ ColumnLayout {
             text: fullView.errorMessage
             font.pixelSize: Kirigami.Theme.smallFont.pixelSize
             opacity: 0.7
-            elide: Text.ElideRight
+            wrapMode: Text.WordWrap
         }
     }
 
@@ -158,6 +161,10 @@ ColumnLayout {
             }
         }
 
-        delegate: EventItem {}
+        delegate: EventItem {
+            respondingStatus: fullView.respondingEventId !== "" && fullView.respondingEventId === eventId
+                ? fullView.respondingStatus : ""
+            onRespondClicked: (responseStatus) => fullView.respondClicked(eventId, selfEmail, responseStatus)
+        }
     }
 }

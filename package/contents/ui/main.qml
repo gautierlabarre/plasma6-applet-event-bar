@@ -21,6 +21,9 @@ PlasmoidItem {
     property bool isLoggedIn: plasmoid.configuration.refreshToken !== ""
     property bool isLoading: false
     property string errorMessage: ""
+    // Invitation response in progress (disables the event's buttons)
+    property string respondingEventId: ""
+    property string respondingStatus: ""
 
     // Displayed in the panel's compact representation
     property string nextEventTitle: ""
@@ -317,6 +320,55 @@ PlasmoidItem {
         })
     }
 
+    // responseStatus: "accepted" or "declined"
+    function respondToInvitation(eventId, selfEmail, responseStatus) {
+        if (respondingEventId !== "") return
+        respondingEventId = eventId
+        respondingStatus = responseStatus
+        Log.log("events", "Responding \"" + responseStatus + "\" to invitation " + eventId)
+        CalendarApi.ensureAccessToken(plasmoid.configuration, Requests, function(token) {
+            if (!token) {
+                clearResponding()
+                errorMessage = i18n("Authentication failed. Try signing in again.")
+                return
+            }
+            CalendarApi.respondToEvent(token, Requests, eventId, selfEmail, responseStatus, function(ok, status) {
+                clearResponding()
+                if (!ok) {
+                    // 403: token was granted before the write scope was requested
+                    errorMessage = status === 403
+                        ? i18n("Missing permission to respond to invitations. Sign out and sign in again.")
+                        : i18n("Could not respond to the invitation.")
+                    return
+                }
+                Log.log("events", "Invitation " + responseStatus + ", refreshing")
+                applyLocalResponse(eventId, responseStatus)
+                updatePanelEvent()
+                fetchEvents()
+            })
+        })
+    }
+
+    function clearResponding() {
+        respondingEventId = ""
+        respondingStatus = ""
+    }
+
+    // Immediate feedback before the refetch: declined events are removed
+    // (same as populateModel), accepted ones become eligible for the panel
+    function applyLocalResponse(eventId, responseStatus) {
+        for (let i = 0; i < eventsModel.count; i++) {
+            if (eventsModel.get(i).eventId === eventId) {
+                if (responseStatus === "declined") {
+                    eventsModel.remove(i)
+                } else {
+                    eventsModel.setProperty(i, "responseStatus", responseStatus)
+                }
+                return
+            }
+        }
+    }
+
     function populateModel(items) {
         eventsModel.clear()
         for (let i = 0; i < items.length; i++) {
@@ -330,6 +382,8 @@ PlasmoidItem {
             const start = event.start.dateTime || event.start.date
             const end = event.end.dateTime || event.end.date
             eventsModel.append({
+                eventId: event.id || "",
+                selfEmail: CalendarApi.getSelfEmail(event),
                 time: formatEventTime(start, isAllDay),
                 duration: formatDuration(start, end, isAllDay),
                 title: event.summary || i18n("(no title)"),
@@ -368,7 +422,10 @@ PlasmoidItem {
         errorMessage: root.errorMessage
         events: eventsModel
         hideOnWindowDeactivate: root.hideOnWindowDeactivate
+        respondingEventId: root.respondingEventId
+        respondingStatus: root.respondingStatus
         onRefreshClicked: root.fetchEvents()
+        onRespondClicked: (eventId, selfEmail, responseStatus) => root.respondToInvitation(eventId, selfEmail, responseStatus)
         onTogglePin: root.hideOnWindowDeactivate = !root.hideOnWindowDeactivate
     }
 }
